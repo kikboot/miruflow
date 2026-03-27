@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MirageML Editor Pro - Визуальный конструктор сайтов</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link type="image/x-icon" href="../mirageml-frontend/logo/logo3.svg" rel="shortcut icon">
+    <link type="image/x-icon" href="../logo/logo3.svg" rel="shortcut icon">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -31,8 +31,8 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="logo">
-                    <img src="../mirageml-frontend/logo/logo3.svg" alt="MirageML Logo" class="logo-icon">
-                            <span class="logo-text">MirageML</span>
+                    <img src="../logo/logo3.svg" alt="MirageML Logo" class="logo-icon">
+                    <span class="logo-text">MirageML</span>
                 </div>
             </div>
             
@@ -130,31 +130,24 @@
                             <i class="fas fa-search"></i>
                             <input type="text" id="section-search" placeholder="Поиск секций...">
                         </div>
-                        
-                        <div class="categories-filter" id="categories-filter">
-                            <button class="filter-btn active" data-category="all">Все</button>
-                            <button class="filter-btn" data-category="cover">Обложка</button>
-                            <button class="filter-btn" data-category="about">О проекте</button>
-                            <button class="filter-btn" data-category="header">Заголовок</button>
-                            <button class="filter-btn" data-category="text">Текст</button>
-                            <button class="filter-btn" data-category="image">Изображение</button>
-                            <button class="filter-btn" data-category="gallery">Галерея</button>
-                            <button class="filter-btn" data-category="features">Преимущества</button>
-                            <button class="filter-btn" data-category="team">Команда</button>
-                            <button class="filter-btn" data-category="testimonials">Отзывы</button>
-                            <button class="filter-btn" data-category="contact">Контакты</button>
-                            <button class="filter-btn" data-category="form">Форма</button>
-                            <button class="filter-btn" data-category="button">Кнопка</button>
-                            <button class="filter-btn" data-category="pricing">Тарифы</button>
-                            <button class="filter-btn" data-category="footer">Подвал</button>
-                            <button class="filter-btn" data-category="video">Видео</button>
-                            <button class="filter-btn" data-category="divider">Разделитель</button>
-                            <button class="filter-btn" data-category="faq">FAQ</button>
-                            <button class="filter-btn" data-category="cta">CTA</button>
+
+                        <div class="accordion-header">
+                            <div class="accordion-header-title">
+                                <i class="fas fa-folder-tree"></i>
+                                <span>Категории секций</span>
+                            </div>
+                            <div class="accordion-actions">
+                                <button class="accordion-action-btn" id="expand-all-btn" title="Развернуть все">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <button class="accordion-action-btn" id="collapse-all-btn" title="Свернуть все">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                            </div>
                         </div>
-                        
-                        <div class="sections-grid" id="sections-library">
-                            <!-- Секции загружаются из JS -->
+
+                        <div class="accordion-container" id="accordion-container">
+                            <!-- Аккордеон генерируется через JS -->
                         </div>
                     </div>
                     
@@ -528,7 +521,15 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="js/sections.js"></script>
-    <script src="js/editor.js"></script>
+    <script src="js/sections.js?v=3"></script>
+    <script src="js/editor.js?v=3"></script>
+    <script>
+        // Проверка загрузки секций
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('📦 SECTIONS_LIBRARY:', typeof SECTIONS_LIBRARY !== 'undefined' ? SECTIONS_LIBRARY.length + ' секций' : 'НЕ ЗАГРУЖЕН');
+            console.log('📂 SECTION_CATEGORIES:', typeof SECTION_CATEGORIES !== 'undefined' ? Object.keys(SECTION_CATEGORIES).length + ' категорий' : 'НЕ ЗАГРУЖЕН');
+            console.log('🔧 getSectionsByCategory:', typeof getSectionsByCategory !== 'undefined' ? 'доступна' : 'НЕ доступна');
+        });
+    </script>
 </body>
 </html>

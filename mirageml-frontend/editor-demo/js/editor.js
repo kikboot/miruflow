@@ -17,7 +17,7 @@ let DOM = {};
 function init() {
     initDOM();
     initTabs();
-    renderSectionsLibrary('all');
+    renderAccordion(); // Рендерим аккордеон вместо старой сетки
     setupEventListeners();
     setupDragAndDrop();
     setupKeyboardShortcuts();
@@ -25,9 +25,9 @@ function init() {
     setupToolbar();
     setupCanvasInteractions();
     renderRulers();
-    
+
     console.log('✅ MirageML Editor Pro initialized');
-    updateStatus('Готов к работе');
+    updateStatus(`Загружено ${getTotalSectionsCount()} секций в ${Object.keys(SECTION_CATEGORIES).length} категориях`);
 }
 
 function initDOM() {
@@ -65,38 +65,131 @@ function initTabs() {
     });
 }
 
-function renderSectionsLibrary(category) {
-    if (!DOM.sectionsLibrary) return;
-    
-    DOM.sectionsLibrary.innerHTML = '';
-    const filtered = category === 'all' 
-        ? SECTIONS_LIBRARY 
-        : SECTIONS_LIBRARY.filter(s => s.category === category);
-    
-    filtered.forEach(section => {
-        const card = document.createElement('div');
-        card.className = 'section-card';
-        card.draggable = true;
-        card.dataset.sectionId = section.id;
-        card.innerHTML = `
-            <div class="section-preview">
-                <i class="fas ${section.icon}"></i>
-            </div>
-            <div class="section-info">
-                <h4>${section.name}</h4>
-                <p>${section.category}</p>
+// Рендеринг аккордеона секций
+function renderAccordion(searchQuery = '') {
+    const container = document.getElementById('accordion-container');
+    if (!container) return;
+
+    const grouped = getSectionsByCategory();
+    const query = searchQuery.toLowerCase();
+    let html = '';
+
+    for (const [catKey, sections] of Object.entries(grouped)) {
+        const category = SECTION_CATEGORIES[catKey];
+        if (!category) continue;
+
+        // Фильтрация секций по поиску
+        const filteredSections = sections.filter(s =>
+            s.name.toLowerCase().includes(query) ||
+            s.category.toLowerCase().includes(query)
+        );
+
+        // Пропускаем пустые категории при поиске
+        if (searchQuery && filteredSections.length === 0) continue;
+
+        const count = searchQuery ? filteredSections.length : sections.length;
+        const isExpanded = category.expanded ? 'expanded' : '';
+        const chevronIcon = category.expanded ? 'fa-chevron-down' : 'fa-chevron-right';
+
+        html += `
+            <div class="accordion-item ${isExpanded}" data-category="${catKey}">
+                <div class="accordion-item-header" onclick="toggleAccordionItem('${catKey}')">
+                    <div class="accordion-chevron">
+                        <i class="fas ${chevronIcon}"></i>
+                    </div>
+                    <div class="accordion-icon">
+                        <i class="fas ${category.icon}"></i>
+                    </div>
+                    <span class="accordion-title">${category.name}</span>
+                    <span class="accordion-count">${count}</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-sections-list">
+                        ${(searchQuery ? filteredSections : sections).map(section => `
+                            <div class="section-card" draggable="true" data-section-id="${section.id}">
+                                <div class="section-card-icon">
+                                    <i class="fas ${section.icon}"></i>
+                                </div>
+                                <div class="section-card-info">
+                                    <h4>${section.name}</h4>
+                                    <p>${section.category}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
             </div>
         `;
-        card.addEventListener('click', () => addSectionToCanvas(section));
-        card.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', section.id);
-            e.dataTransfer.effectAllowed = 'copy';
+    }
+
+    if (html === '') {
+        html = `
+            <div class="empty-state" style="padding: 40px 20px;">
+                <i class="fas fa-search" style="font-size: 48px; margin-bottom: 16px;"></i>
+                <p>Ничего не найдено по запросу "${searchQuery}"</p>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+
+    // Навешиваем обработчики drag-and-drop на новые карточки
+    container.querySelectorAll('.section-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const sectionId = card.dataset.sectionId;
+            const sectionData = SECTIONS_LIBRARY.find(s => s.id === sectionId);
+            if (sectionData) addSectionToCanvas(sectionData);
         });
-        DOM.sectionsLibrary.appendChild(card);
+        card.addEventListener('dragstart', (e) => {
+            const sectionId = card.dataset.sectionId;
+            const sectionData = SECTIONS_LIBRARY.find(s => s.id === sectionId);
+            if (sectionData) {
+                e.dataTransfer.setData('text/plain', sectionId);
+                e.dataTransfer.effectAllowed = 'copy';
+            }
+        });
     });
-    
-    updateStatus(`Загружено ${filtered.length} секций`);
 }
+
+// Переключение аккордеона
+window.toggleAccordionItem = function(categoryKey) {
+    const item = document.querySelector(`.accordion-item[data-category="${categoryKey}"]`);
+    if (!item) return;
+
+    const isExpanded = item.classList.contains('expanded');
+
+    if (isExpanded) {
+        item.classList.remove('expanded');
+        SECTION_CATEGORIES[categoryKey].expanded = false;
+    } else {
+        item.classList.add('expanded');
+        SECTION_CATEGORIES[categoryKey].expanded = true;
+    }
+
+    // Перерисовываем аккордеон для обновления иконок
+    const searchQuery = DOM.sectionSearch?.value || '';
+    renderAccordion(searchQuery);
+};
+
+// Развернуть все категории
+window.expandAllCategories = function() {
+    for (const key of Object.keys(SECTION_CATEGORIES)) {
+        SECTION_CATEGORIES[key].expanded = true;
+    }
+    const searchQuery = DOM.sectionSearch?.value || '';
+    renderAccordion(searchQuery);
+    updateStatus('Все категории развернуты');
+};
+
+// Свернуть все категории
+window.collapseAllCategories = function() {
+    for (const key of Object.keys(SECTION_CATEGORIES)) {
+        SECTION_CATEGORIES[key].expanded = false;
+    }
+    const searchQuery = DOM.sectionSearch?.value || '';
+    renderAccordion(searchQuery);
+    updateStatus('Все категории свернуты');
+};
 
 function addSectionToCanvas(sectionData, isImage = false, imageData = null) {
     const sectionId = `section-${Date.now()}`;
@@ -1582,22 +1675,17 @@ function setupEventListeners() {
         }
     });
 
+    // Поиск секций в аккордеоне
     DOM.sectionSearch?.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
-        document.querySelectorAll('.section-card').forEach(card => {
-            card.style.display = card.querySelector('h4').textContent.toLowerCase().includes(query) ? 'block' : 'none';
-        });
+        renderAccordion(query);
     });
-    
-    DOM.categoriesFilter?.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            renderSectionsLibrary(e.target.dataset.category);
-        }
-    });
-    
-    document.getElementById('zoom-in')?.addEventListener('click', () => { 
+
+    // Кнопки развернуть/свернуть все
+    document.getElementById('expand-all-btn')?.addEventListener('click', expandAllCategories);
+    document.getElementById('collapse-all-btn')?.addEventListener('click', collapseAllCategories);
+
+    document.getElementById('zoom-in')?.addEventListener('click', () => {
         state.zoom = Math.min(state.zoom + 0.1, 2); 
         DOM.canvas.style.transform = `scale(${state.zoom})`; 
         DOM.zoomLevel.textContent = `${Math.round(state.zoom * 100)}%`; 

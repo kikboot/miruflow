@@ -10,6 +10,9 @@ app.use(express.static(path.join(__dirname)));
 // Статические файлы из mirageml-frontend (для логотипов)
 app.use('/mirageml-frontend', express.static(path.join(__dirname, '../mirageml-frontend')));
 
+// Также добавляем алиас для /logo чтобы работало напрямую
+app.use('/logo', express.static(path.join(__dirname, '../mirageml-frontend/logo')));
+
 // Главная страница
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -20,18 +23,10 @@ app.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║   🎨 MirageML Editor Demo запущен!                        ║
+║   MirageML Editor Demo запущен!                           ║
 ║                                                           ║
-║   ➤ Откройте: http://localhost:${PORT}                     ║
+║   ➤ Откройте: http://localhost:${PORT}                   ║
 ║                                                           ║
-║   Функционал:                                             ║
-║   • Drag-and-drop секций из левой панели                 ║
-║   • Клик для добавления секции                           ║
-║   • Панель слоёв с управлением порядком                  ║
-║   • Панель свойств для редактирования                    ║
-║   • Экспорт в HTML/CSS                                   ║
-║   • Предпросмотр                                         ║
-║   • Undo/Redo (Ctrl+Z / Ctrl+Y)                          ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
     `);
