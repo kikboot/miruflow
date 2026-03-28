@@ -1,9 +1,3 @@
-/**
- * MirageML Backend Server
- * Сервер для визуального HTML/CSS редактора MirageML
- * Версия с PostgreSQL
- */
-
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -189,7 +183,8 @@ app.post('/api/login', async (req, res) => {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict'
+            sameSite: 'lax',
+            path: '/'
         });
 
         res.json({
@@ -391,13 +386,13 @@ app.get('/api/projects/:id', authenticateToken, async (req, res) => {
 
 app.post('/api/projects', authenticateToken, async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, elements, canvas_size } = req.body;
         const newProject = {
             id: Date.now().toString(),
             user_id: req.user.userId,
             name: name || 'Новый проект',
-            elements: {},
-            canvas_size: { width: 800, height: 600 }
+            elements: elements || {},
+            canvas_size: canvas_size || { width: 800, height: 600 }
         };
 
         const project = await db.createProject(newProject);
@@ -415,8 +410,8 @@ app.post('/api/projects', authenticateToken, async (req, res) => {
 app.put('/api/projects/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { elements, canvasSize } = req.body;
-        
+        const { elements, canvas_size } = req.body;
+
         const projects = await db.getProjectsByUserId(req.user.userId);
         const project = projects.find(p => p.id === id);
 
@@ -426,7 +421,7 @@ app.put('/api/projects/:id', authenticateToken, async (req, res) => {
 
         const updatedProject = await db.updateProject(id, {
             elements: elements || {},
-            canvas_size: canvasSize || { width: 800, height: 600 }
+            canvas_size: canvas_size || { width: 800, height: 600 }
         });
 
         res.json({

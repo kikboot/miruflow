@@ -829,7 +829,7 @@ async function handleLogin(e) {
         submitBtn.innerHTML = '<span class="spinner"></span> Вход...';
         submitBtn.disabled = true;
         
-        const response = await fetch('http://localhost:3001/api/login', {
+        const response = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -867,23 +867,16 @@ async function handleLogin(e) {
         // Восстанавливаем кнопку
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        
+
         if (response.ok && data.success) {
-            // Check if "Remember Me" is checked
-            const rememberMe = document.getElementById('remember-me').checked;
-            
-            if (rememberMe) {
-                // Store token in localStorage (which persists)
-                localStorage.setItem('token', data.token);
-                // Optionally store email for pre-filling the form
-                localStorage.setItem('rememberedEmail', email);
-            } else {
-                // Store token in sessionStorage (cleared when browser closes)
-                sessionStorage.setItem('token', data.token);
-                // Remove remembered email if "Remember Me" is not checked
-                localStorage.removeItem('rememberedEmail');
-            }
-            
+            // Сохраняем токен как 'token' (для совместимости)
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('authToken', data.token);
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('authToken', data.token);
+            // Optionally store email for pre-filling the form
+            localStorage.setItem('rememberedEmail', email);
+
             updateAuthUI(data.user);
             document.querySelectorAll('.modal').forEach(m => hideModal(m));
             showSuccessMessage('Вход выполнен успешно!');
@@ -948,7 +941,7 @@ async function handleRegister(e) {
         submitBtn.innerHTML = '<span class="spinner"></span> Регистрация...';
         submitBtn.disabled = true;
         
-        const response = await fetch('http://localhost:3001/api/register', {
+        const response = await fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })
@@ -1058,7 +1051,7 @@ async function checkAuthStatus() {
     if (!token) return;
 
     try {
-        const response = await fetch('http://localhost:3001/api/profile', {
+        const response = await fetch('/api/profile', {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -1272,11 +1265,11 @@ function initUserMenu() {
 }
 
 async function logout() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     if (!token) return;
 
     try {
-        await fetch('http://localhost:3001/api/logout', {
+        await fetch('/api/logout', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1288,7 +1281,9 @@ async function logout() {
     }
 
     localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     sessionStorage.removeItem('token');
+    sessionStorage.removeItem('authToken');
     showSuccessMessage('Вы успешно вышли из системы');
     setTimeout(() => window.location.reload(), 1000);
 }
@@ -1314,7 +1309,7 @@ async function loadReviews() {
     `).join('');
 
     try {
-        const response = await fetch('http://localhost:3001/api/reviews');
+        const response = await fetch('/api/reviews');
         
         let reviews = [];
         if (response.headers.get('content-type') && response.headers.get('content-type').includes('application/json')) {
