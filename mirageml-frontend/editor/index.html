@@ -6,7 +6,7 @@
     <title>Редактор</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link type="image/x-icon" href="../logo/logo3.svg" rel="shortcut icon">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
     <div class="background-container">
@@ -336,23 +336,23 @@
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="export-format" value="html" checked>
-                            <span>HTML + CSS</span>
+                            <span>Один HTML файл (CSS внутри &lt;style&gt;)</span>
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="export-format" value="zip">
-                            <span>ZIP архив</span>
+                            <span>ZIP архив (HTML + CSS + README)</span>
                         </label>
                     </div>
                 </div>
                 <div class="setting-group">
                     <h4>Опции</h4>
                     <label class="checkbox-label">
-                        <input type="checkbox" id="export-minify" checked>
-                        <span>Минифицировать CSS</span>
+                        <input type="checkbox" id="export-minify" checked disabled>
+                        <span>Минифицировать CSS <small>(в разработке)</small></span>
                     </label>
                     <label class="checkbox-label">
-                        <input type="checkbox" id="export-responsive" checked>
-                        <span>Адаптивная вёрстка</span>
+                        <input type="checkbox" id="export-responsive" checked disabled>
+                        <span>Адаптивная вёрстка <small>(включено)</small></span>
                     </label>
                 </div>
             </div>
@@ -365,7 +365,7 @@
                     <textarea id="export-html" readonly></textarea>
                     <div class="export-actions">
                         <button class="btn btn-outline" id="copy-html">
-                            <i class="fas fa-copy"></i> Копировать
+                            <i class="fas fa-copy"></i> Копировать HTML
                         </button>
                     </div>
                 </div>
@@ -373,12 +373,15 @@
                     <textarea id="export-css" readonly></textarea>
                     <div class="export-actions">
                         <button class="btn btn-outline" id="copy-css">
-                            <i class="fas fa-copy"></i> Копировать
+                            <i class="fas fa-copy"></i> Копировать CSS
                         </button>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="document.getElementById('export-modal').style.display='none'">
+                    <i class="fas fa-times"></i> Отмена
+                </button>
                 <button class="btn btn-primary" id="download-export">
                     <i class="fas fa-download"></i> Скачать
                 </button>
@@ -556,14 +559,17 @@
     <script src="js/api.js?v=1"></script>
     <script src="js/sections.js?v=4"></script>
     <script src="js/templates.js?v=1"></script>
-    <script src="js/editor.js?v=4"></script>
-    <script src="js/editor-integration.js?v=1"></script>
+    <!-- Расширенная панель свойств -->
+    <script src="js/editor-properties.js?v=1"></script>
+    <script src="js/editor-updates.js?v=1"></script>
+    <script src="js/editor.js?v=12"></script>
+    <script src="js/editor-integration.js?v=2"></script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            console.log('📦 SECTIONS_LIBRARY:', typeof SECTIONS_LIBRARY !== 'undefined' ? SECTIONS_LIBRARY.length + ' секций' : 'НЕ ЗАГРУЖЕН');
-            console.log('📂 SECTION_CATEGORIES:', typeof SECTION_CATEGORIES !== 'undefined' ? Object.keys(SECTION_CATEGORIES).length + ' категорий' : 'НЕ ЗАГРУЖЕН');
-            console.log('🔧 getSectionsByCategory:', typeof getSectionsByCategory !== 'undefined' ? 'доступна' : 'НЕ доступна');
-            console.log('📋 PROJECT_TEMPLATES:', typeof PROJECT_TEMPLATES !== 'undefined' ? PROJECT_TEMPLATES.length + ' шаблонов' : 'НЕ ЗАГРУЖЕН');
+            console.log('SECTIONS_LIBRARY:', typeof SECTIONS_LIBRARY !== 'undefined' ? SECTIONS_LIBRARY.length + ' секций' : 'НЕ ЗАГРУЖЕН');
+            console.log('SECTION_CATEGORIES:', typeof SECTION_CATEGORIES !== 'undefined' ? Object.keys(SECTION_CATEGORIES).length + ' категорий' : 'НЕ ЗАГРУЖЕН');
+            console.log('getSectionsByCategory:', typeof getSectionsByCategory !== 'undefined' ? 'доступна' : 'НЕ доступна');
+            console.log('PROJECT_TEMPLATES:', typeof PROJECT_TEMPLATES !== 'undefined' ? PROJECT_TEMPLATES.length + ' шаблонов' : 'НЕ ЗАГРУЖЕН');
         });
     </script>
 </body>

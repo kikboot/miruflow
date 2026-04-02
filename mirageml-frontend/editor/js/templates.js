@@ -1,5 +1,3 @@
-// Обработка шаблонов проектов
-
 function initTemplatesSystem() {
     setupTemplatesButton();
     setupTemplatesModal();
@@ -13,7 +11,6 @@ function setupTemplatesButton() {
 }
 
 function setupTemplatesModal() {
-    // Закрытие по крестику
     const closeBtn = document.querySelector('#templates-modal .close-btn');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
@@ -21,7 +18,6 @@ function setupTemplatesModal() {
         });
     }
 
-    // Закрытие по клику вне модального окна
     const modal = document.getElementById('templates-modal');
     if (modal) {
         modal.addEventListener('click', (e) => {
@@ -96,7 +92,6 @@ function getSectionNames(sectionIds) {
     return sectionIds.map(id => {
         const section = window.SECTIONS_LIBRARY.find(s => s.id === id);
         if (section) {
-            // Возвращаем короткое имя категории
             const categoryNames = {
                 'header': 'Шапка',
                 'hero': 'Hero',
@@ -125,20 +120,16 @@ window.selectAndLoadTemplate = function(templateId) {
         return;
     }
 
-    // Подтверждение если уже есть секции
     if (state.sections && state.sections.length > 0) {
         const confirmed = confirm('Текущие секции будут удалены. Продолжить?');
         if (!confirmed) return;
     }
 
-    // Закрываем модальное окно
     document.getElementById('templates-modal').style.display = 'none';
 
-    // Загружаем шаблон
     loadProjectTemplate(templateId);
 };
 
-// Инициализация при загрузке страницы
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initTemplatesSystem);
 } else {

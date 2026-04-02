@@ -188,12 +188,21 @@ function loadProjectIntoEditor(project) {
 
                 DOM.canvas.appendChild(sectionElement);
 
-                state.sections.push({
+                const section = {
                     id: sectionId,
+                    sectionId: elementData.sectionId || 'custom',
                     name: elementData.name || 'Секция',
                     element: sectionElement,
-                    css: elementData.css || ''
-                });
+                    html: elementData.html,
+                    css: elementData.css || '',
+                    isImage: false,
+                    imageData: null,
+                    rotation: 0,
+                    elements: []
+                };
+                
+                parseSectionElements(section);
+                state.sections.push(section);
             }
         });
 

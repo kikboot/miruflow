@@ -285,20 +285,25 @@ function selectSection(sectionId) {
     }
 }
 
-function selectElement(sectionId, elementId) {
+function selectElement(sectionId, elementId, event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
     const section = state.sections.find(s => s.id === sectionId);
     if (!section) return;
-    
+
     const element = section.elements.find(el => el.id === elementId);
     if (!element) return;
-    
+
     state.selectedElement = element;
     state.selectedSection = section;
 
     highlightElement(element.element);
     renderElementProperties(element);
     showFloatingToolbar();
-    
+
     updateStatus(`Выбран элемент: ${element.name}`);
     updateSectionCounter();
     updateMinimap();
@@ -326,6 +331,14 @@ function updatePropertiesPanel() {
 }
 
 function renderSectionProperties(section) {
+    if (typeof renderSectionPropertiesEnhanced === 'function') {
+        renderSectionPropertiesEnhanced(section);
+    } else {
+        renderSectionPropertiesLegacy(section);
+    }
+}
+
+function renderSectionPropertiesLegacy(section) {
     if (!DOM.propertiesContent) return;
 
     const bgStyle = section.element.style.background || '';
@@ -910,6 +923,14 @@ function applyBgFilters() {
 }
 
 function renderElementProperties(element) {
+    if (typeof renderElementPropertiesEnhanced === 'function') {
+        renderElementPropertiesEnhanced(element);
+    } else {
+        renderElementPropertiesLegacy(element);
+    }
+}
+
+function renderElementPropertiesLegacy(element) {
     if (!DOM.propertiesContent) return;
 
     const el = element.element;
@@ -1338,20 +1359,24 @@ function setupCanvasInteractions() {
         if (e.target.closest('.section-controls') || e.target.closest('.resize-handle') || e.target.closest('.rotate-handle')) {
             return;
         }
+
+        const interactiveElement = e.target.closest('h1, h2, h3, h4, p, button, img, a, i, svg, video, .logo');
         
-        const textElement = e.target.closest('h1, h2, h3, h4, p, button, a, img, div');
-        if (textElement && !e.target.closest('.canvas-section')) {
-            const section = state.sections.find(s => s.element.contains(textElement));
-            if (section) {
-                const element = section.elements.find(el => el.element === textElement);
-                if (element) {
-                    selectElement(section.id, element.id);
-                    e.stopPropagation();
-                    return;
+        if (interactiveElement) {
+            const sectionEl = interactiveElement.closest('.canvas-section');
+            if (sectionEl) {
+                const section = state.sections.find(s => s.id === sectionEl.id);
+                if (section) {
+                    const element = section.elements.find(el => el.element === interactiveElement);
+                    if (element) {
+                        selectElement(section.id, element.id, e);
+                        e.stopPropagation();
+                        return;
+                    }
                 }
             }
         }
-        
+
         if (e.target === DOM.canvas || e.target === DOM.canvasPlaceholder) {
             document.querySelectorAll('.canvas-section').forEach(el => el.classList.remove('selected'));
             document.querySelectorAll('.canvas-element-highlight').forEach(el => {
@@ -1365,18 +1390,21 @@ function setupCanvasInteractions() {
             updateSectionCounter();
         }
     });
-    
+
     DOM.canvas?.addEventListener('click', (e) => {
         const sectionEl = e.target.closest('.canvas-section');
         if (sectionEl && !e.target.closest('.section-controls')) {
-            const section = state.sections.find(s => s.element === sectionEl);
-            if (section) {
-                selectSection(section.id);
-                e.stopPropagation();
+            const interactiveElement = e.target.closest('h1, h2, h3, h4, p, button, img, a, i, svg, video, .logo');
+            if (!interactiveElement || interactiveElement === sectionEl) {
+                const section = state.sections.find(s => s.id === sectionEl.id);
+                if (section) {
+                    selectSection(section.id);
+                    e.stopPropagation();
+                }
             }
         }
     });
-    
+
     DOM.canvas?.addEventListener('dblclick', (e) => {
         const textElement = e.target.closest('h1, h2, h3, h4, p, button, a');
         if (textElement && !e.target.closest('.section-controls')) {
@@ -1397,14 +1425,14 @@ function setupCanvasInteractions() {
             }
         }
     });
-    
+
     DOM.canvas?.addEventListener('mousemove', (e) => {
         const rect = DOM.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         if (DOM.cursorPosition) DOM.cursorPosition.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)}`;
     });
-    
+
     DOM.canvasWrapper?.addEventListener('scroll', () => {
         updateMinimap();
     });
@@ -1635,36 +1663,383 @@ function setupEventListeners() {
             document.getElementById(`${tab.dataset.export}-pane`).classList.add('active');
         });
     });
+
+    document.getElementById('copy-html')?.addEventListener('click', () => {
+        copyToClipboard(document.getElementById('export-html').value);
+        showToast('HTML скопирован в буфер', 'success');
+    });
+
+    document.getElementById('copy-css')?.addEventListener('click', () => {
+        copyToClipboard(document.getElementById('export-css').value);
+        showToast('CSS скопирован в буфер', 'success');
+    });
+
+    document.getElementById('download-export')?.addEventListener('click', handleExportDownload);
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).catch(() => {
+        // Fallback для старых браузеров
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    });
 }
 
 function showExportModal() {
-    document.getElementById('export-html').value = generateHTML();
-    document.getElementById('export-css').value = generateCSS();
+    const cssContent = generateCSS();
+    const htmlContent = generateHTML(false, cssContent); // Для превью показываем с inline CSS
+    
+    document.getElementById('export-html').value = htmlContent;
+    document.getElementById('export-css').value = cssContent;
     DOM.modals.export.style.display = 'flex';
 }
 
-function generateHTML() {
-    let html = '<!DOCTYPE html>\n<html lang="ru">\n<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>MirageML Project</title><link rel="stylesheet" href="styles.css"></head>\n<body>\n';
-    state.sections.forEach(s => {
-        const clone = s.element.cloneNode(true);
+async function handleExportDownload() {
+    const exportFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'html';
+    const minify = document.getElementById('export-minify')?.checked || false;
+    
+    if (exportFormat === 'html') {
+        const content = exportAsSingleFile();
+        downloadFile(content, 'mirageml-project.html', 'text/html');
+        showToast('HTML файл скачан', 'success');
+    } else if (exportFormat === 'zip') {
+        showToast('Генерация ZIP...', 'info');
+        const zipBlob = await generateZIP();
+        if (zipBlob) {
+            downloadFile(zipBlob, 'mirageml-project.zip', 'application/zip');
+            showToast('ZIP архив скачан', 'success');
+        }
+    }
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function formatHTML(html) {
+    let formatted = '';
+    let indent = 0;
+    const tab = '    ';
+    
+    const tags = html.split(/(<\/?[^>]+>)/g).filter(t => t.trim());
+    
+    for (let i = 0; i < tags.length; i++) {
+        const tag = tags[i];
+        
+        if (tag.startsWith('<!') || tag.startsWith('<?')) {
+            formatted += tag + '\n';
+            continue;
+        }
+        
+        if (tag.match(/^<\//)) {
+            indent--;
+            formatted += tab.repeat(Math.max(0, indent)) + tag + '\n';
+        }
+        else if (tag.match(/^<[^>]+\/>$/) || tag.match(/^<(br|hr|img|input|meta|link|source)(\s|>|\/>)/i)) {
+            formatted += tab.repeat(Math.max(0, indent)) + tag + '\n';
+        }
+        else if (tag.match(/^</)) {
+            formatted += tab.repeat(Math.max(0, indent)) + tag + '\n';
+            if (!tag.match(/^<(br|hr|img|input|meta|link|source|!DOCTYPE)/i)) {
+                indent++;
+            }
+        }
+        else {
+            const text = tag.trim();
+            if (text) {
+                formatted += tab.repeat(Math.max(0, indent)) + text + '\n';
+            }
+        }
+    }
+    
+    return formatted.trim();
+}
+
+function formatCSS(css) {
+    let formatted = '';
+    let indent = 0;
+    const tab = '    ';
+    const lines = css.split(';');
+    
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        
+        if (trimmed.includes('{')) {
+            const parts = trimmed.split('{');
+            formatted += parts[0].trim() + ' {\n';
+            indent++;
+        }
+        else if (trimmed.includes('}')) {
+            const parts = trimmed.split('}');
+            if (parts[0].trim()) {
+                formatted += tab.repeat(indent) + parts[0].trim() + ';\n';
+            }
+            indent--;
+            formatted += tab.repeat(Math.max(0, indent)) + '}\n\n';
+        }
+        else if (trimmed.includes(':')) {
+            formatted += tab.repeat(Math.max(0, indent)) + trimmed + ';\n';
+        }
+        else if (trimmed.startsWith('/*')) {
+            formatted += '\n' + tab.repeat(Math.max(0, indent)) + trimmed + '\n';
+        }
+    }
+    
+    return formatted.trim();
+}
+
+function generateHTML(includeInlineCSS = false, cssContent = '') {
+    const sections = state.sections;
+    
+    let html = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MirageML Project</title>
+    <meta name="generator" content="MirageML Editor">
+    <meta name="description" content="Project created with MirageML visual editor">
+`;
+
+    if (includeInlineCSS) {
+        html += `    <style>
+${cssContent.split('\n').map(line => '        ' + line).join('\n')}
+    </style>
+`;
+    } else {
+        html += `    <link rel="stylesheet" href="styles.css">
+`;
+    }
+
+    html += `</head>
+<body>
+`;
+
+    sections.forEach((section, index) => {
+        const clone = section.element.cloneNode(true);
+        
         clone.querySelector('.section-controls')?.remove();
         clone.querySelectorAll('.resize-handle, .rotate-handle, .rotate-line').forEach(el => el.remove());
         clone.classList.remove('selected', 'canvas-section');
         clone.style.border = 'none';
         clone.style.boxShadow = 'none';
-        html += clone.outerHTML + '\n';
+        clone.style.margin = '0';
+        clone.style.padding = '0';
+        clone.style.width = '100%';
+        clone.style.outline = 'none';
+        clone.style.outlineOffset = '0';
+        
+        html += `    <section class="section-${index + 1}">\n`;
+        
+        const innerHTML = clone.innerHTML.trim();
+        const formattedInner = formatHTML(innerHTML);
+        html += formattedInner.split('\n').map(line => '        ' + line).join('\n');
+        
+        html += `\n    </section>\n`;
     });
-    html += '</body>\n</html>';
+
+    html += `
+</body>
+</html>`;
+
     return html;
 }
 
 function generateCSS() {
-    let css = '/* MirageML Project Styles */\n* { margin: 0; padding: 0; box-sizing: border-box; }\nbody { font-family: "Inter", sans-serif; line-height: 1.6; }\n.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }\n\n';
-    state.sections.forEach(s => css += `/* ${s.name} */\n${s.css}\n\n`);
+    const sections = state.sections;
+    
+    let css = `html {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #1e293b;
+    background-color: #ffffff;
+    overflow-x: hidden;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+
+section {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+`;
+
+    sections.forEach((section, index) => {
+        const className = `.section-${index + 1}`;
+        const element = section.element;
+        const computedStyle = window.getComputedStyle(element);
+        const styles = {
+            'display': computedStyle.display,
+            'width': '100%',
+            'max-width': '100%',
+            'min-height': computedStyle.minHeight !== 'auto' ? computedStyle.minHeight : null,
+            'padding': computedStyle.padding !== '0px' ? computedStyle.padding : null,
+            'margin': '0',
+            'background': computedStyle.background,
+            'border-radius': computedStyle.borderRadius !== '0px' ? computedStyle.borderRadius : null,
+            'box-shadow': computedStyle.boxShadow !== 'none' ? computedStyle.boxShadow : null,
+            'transform': computedStyle.transform !== 'none' ? computedStyle.transform : null,
+            'filter': computedStyle.filter !== 'none' ? computedStyle.filter : null
+        };
+        const filteredStyles = Object.entries(styles)
+            .filter(([_, value]) => value !== null)
+            .map(([key, value]) => `    ${key}: ${value};`)
+            .join('\n');
+
+        css += `\n${className} {\n`;
+        css += filteredStyles;
+        css += `\n}\n`;
+        const innerElements = section.elements.filter(el => 
+            ['h1', 'h2', 'h3', 'h4', 'p', 'button', 'img', 'a'].includes(el.tag)
+        );
+
+        if (innerElements.length > 0) {
+            innerElements.forEach((el, idx) => {
+                const computedElStyle = window.getComputedStyle(el.element);
+                const tag = el.tag;
+                
+                const elStyles = {
+                    'font-size': computedElStyle.fontSize !== '16px' ? computedElStyle.fontSize : null,
+                    'font-weight': computedElStyle.fontWeight !== '400' ? computedElStyle.fontWeight : null,
+                    'color': computedElStyle.color !== 'rgb(0, 0, 0)' && computedElStyle.color !== 'rgba(0, 0, 0, 0)' ? computedElStyle.color : null,
+                    'text-align': computedElStyle.textAlign !== 'left' ? computedElStyle.textAlign : null,
+                    'padding': computedElStyle.padding !== '0px' ? computedElStyle.padding : null,
+                    'margin': computedElStyle.margin !== '0px' ? computedElStyle.margin : null,
+                    'background-color': computedElStyle.backgroundColor !== 'rgba(0, 0, 0, 0)' && computedElStyle.backgroundColor !== 'transparent' ? computedElStyle.backgroundColor : null,
+                    'border-radius': computedElStyle.borderRadius !== '0px' ? computedElStyle.borderRadius : null,
+                    'box-shadow': computedElStyle.boxShadow !== 'none' ? computedElStyle.boxShadow : null
+                };
+
+                const filteredElStyles = Object.entries(elStyles)
+                    .filter(([_, value]) => value !== null)
+                    .map(([key, value]) => `    ${key}: ${value};`)
+                    .join('\n');
+
+                if (filteredElStyles) {
+                    css += `\n${className} ${tag}:nth-of-type(${idx + 1}) {\n`;
+                    css += filteredElStyles;
+                    css += `\n}\n`;
+                }
+            });
+        }
+    });
+
+    css += `
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .section-1,
+    .section-2,
+    .section-3,
+    .section-4,
+    .section-5 {
+        width: 100%;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        font-size: 12px;
+    }
+}
+`;
+
     return css;
 }
 
-function saveProject() {
+async function generateZIP() {
+    const JSZip = window.JSZip;
+    if (!JSZip) {
+        showToast('JSZip не загружен', 'error');
+        return null;
+    }
+
+    const zip = new JSZip();
+    const cssContent = generateCSS();
+    const htmlContent = generateHTML(false, cssContent);
+
+    zip.file('index.html', htmlContent);
+    zip.file('styles.css', cssContent);
+
+    const readme = `# MirageML Project
+
+Exported from MirageML Editor on ${new Date().toLocaleDateString('ru-RU')}
+
+## Files
+
+- index.html - HTML markup
+- styles.css - Stylesheets
+
+## Usage
+
+Open index.html in your browser.
+`;
+    zip.file('README.md', readme);
+
+    return await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+}
+
+function exportAsSingleFile() {
+    const cssContent = generateCSS();
+    const htmlContent = generateHTML(true, cssContent);
+    return htmlContent;
+}
+
+function exportAsSeparateFiles() {
+    return {
+        html: generateHTML(false),
+        css: generateCSS()
+    };
+}
+
+function saveToHistory() {
     if (typeof handleSaveProject === 'function') {
         handleSaveProject();
     } else {
