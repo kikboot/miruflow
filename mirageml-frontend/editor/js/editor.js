@@ -101,12 +101,16 @@ function renderAccordion(searchQuery = '') {
                     <div class="accordion-sections-list">
                         ${(searchQuery ? filteredSections : sections).map(section => `
                             <div class="section-card" draggable="true" data-section-id="${section.id}">
-                                <div class="section-card-icon">
-                                    <i class="fas ${section.icon}"></i>
-                                </div>
+                                ${section.preview ? `
+                                    <div class="section-card-preview">
+                                        ${section.preview}
+                                    </div>
+                                ` : ''}
                                 <div class="section-card-info">
+                                    <div class="section-card-info-icon">
+                                        <i class="fas ${section.icon}"></i>
+                                    </div>
                                     <h4>${section.name}</h4>
-                                    <p>${section.category}</p>
                                 </div>
                             </div>
                         `).join('')}
