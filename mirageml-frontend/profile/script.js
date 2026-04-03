@@ -21,7 +21,7 @@ function setInitialDisplayState() {
 function initializeProfile() {
     setInitialDisplayState();
     const isMobile = window.innerWidth <= 768;
-    
+
     if (isMobile) {
         document.body.classList.add('mobile-version');
         initMobileVersion();
@@ -29,13 +29,13 @@ function initializeProfile() {
         document.body.classList.add('desktop-version');
         initDesktopVersion();
     }
-    
+
     initCommonFeatures();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeProfile();
-    
+
     let resizeTimeout;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const isCurrentlyMobile = window.innerWidth <= 768;
             const currentIsMobile = document.body.classList.contains('mobile-version');
             const currentIsDesktop = document.body.classList.contains('desktop-version');
-            
+
             if ((isCurrentlyMobile && !currentIsMobile) || (!isCurrentlyMobile && !currentIsDesktop)) {
                 initializeVersionBasedOnScreenSize();
             }
@@ -525,10 +525,6 @@ function initMobileModalHandlers() {
     document.getElementById('mobile-delete-account')?.addEventListener('click', (e) => {
         e.preventDefault();
         showModal('delete-modal');
-    });
-
-    document.getElementById('back-to-main-mobile')?.addEventListener('click', () => {
-        window.location.href = '../main/index.html';
     });
 }
 
@@ -1216,7 +1212,7 @@ function hideModal(modalId) {
 function initActionHandlers() {
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
 
-    document.getElementById('back-to-main')?.addEventListener('click', () => {
+    document.getElementById('back-to-main-mobile')?.addEventListener('click', () => {
         window.location.href = '../main/index.html';
     });
 }

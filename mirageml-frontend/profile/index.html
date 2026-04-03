@@ -28,17 +28,15 @@
     <header class="mobile-header">
         <div class="container">
             <div class="mobile-header-content">
-                <button class="mobile-back-btn" id="back-to-main-mobile">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                
                 <div class="mobile-header-title">
                     <div class="mobile-logo">
-                        <img src="../logo/logo3.svg" alt="MirageML Logo" class="logo-icon">
-                        <span class="logo-text">Профиль</span>
+                        <a href="../main/index.html" class="logo-wrapper">
+                            <img src="../logo/logo3.svg" alt="MirageML Logo" class="logo-icon">
+                            <span class="logo-text">Профиль</span>
+                        </a>
                     </div>
                 </div>
-                
+
                 <button class="mobile-menu-btn" id="mobile-profile-menu">
                     <i class="fas fa-ellipsis-v"></i>
                 </button>
@@ -238,16 +236,12 @@
             <div class="container">
                 <div class="header-content">
                     <div class="logo">
-                        <div class="logo-wrapper">
+                        <a href="../main/index.html" class="logo-wrapper">
                             <img src="../logo/logo3.svg" alt="MirageML Logo" class="logo-icon">
                             <span class="logo-text">MirageML</span>
-                        </div>
+                        </a>
                     </div>
                     <div class="header-actions">
-                        <button class="btn btn-ghost" id="back-to-main">
-                            <i class="fas fa-arrow-left"></i>
-                            <span>На главную</span>
-                        </button>
                         <button class="btn btn-primary" id="create-project-btn">
                             <i class="fas fa-plus"></i>
                             <span>Создать проект</span>
@@ -549,6 +543,102 @@
     </div>
 
     <script src="../profile/script.js"></script>
+
+    <footer class="footer-modern">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-main">
+                    <div class="footer-brand">
+                        <div class="logo">
+                            <img src="../logo/logo3.svg" alt="MirageML Logo" class="logo-icon">
+                            <span class="logo-text">MirageML</span>
+                        </div>
+                        <p class="footer-description">
+                            Визуальный редактор для быстрого создания веб-страниц без написания кода
+                        </p>
+                        <div class="social-links-modern">
+                            <a href="#" class="social-link" aria-label="VKontakte">
+                                <i class="fab fa-vk"></i>
+                            </a>
+                            <a href="https://t.me/MirageML_Official" class="social-link" aria-label="Telegram">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                            <a href="#" class="social-link" aria-label="Discord">
+                                <i class="fab fa-discord"></i>
+                            </a>
+                            <a href="#" class="social-link" aria-label="YouTube">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                            <a href="#" class="social-link" aria-label="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="footer-links">
+                        <div class="link-group">
+                            <h4>Продукт</h4>
+                            <ul>
+                                <li><a href="../main/index.html#product">Что такое MirageML?</a></li>
+                                <li><a href="../main/index.html#features">Возможности</a></li>
+                                <li><a href="../main/index.html#how-it-works">Как это работает</a></li>
+                                <li><a href="../main/index.html#advantages">Преимущества</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="link-group">
+                            <h4>Ресурсы</h4>
+                            <ul>
+                                <li><a href="../docs/">Документация</a></li>
+                                <li><a href="../support/">Поддержка</a></li>
+                                <li><a href="../about/">О проекте</a></li>
+                            </ul>
+                        </div>
+
+                        <div class="link-group">
+                            <h4>Контакты</h4>
+                            <ul class="contact-list">
+                                <li>
+                                    <i class="fas fa-envelope"></i>
+                                    support@mirage-ml.com
+                                </li>
+                                <li>
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    Россия, Москва
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="link-group">
+                            <h4>Подписка</h4>
+                            <p>Получайте обновления первыми</p>
+                            <form class="subscribe-form-modern">
+                                <div class="input-group">
+                                    <input type="email" placeholder="Ваш email" required>
+                                    <button type="submit">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="legal-links">
+                        <a href="../confidentiality/index.html">Политика конфиденциальности</a>
+                        <a href="../conditions/index.html">Условия использования</a>
+                    </div>
+                    <div class="copyright">
+                        <p>&copy; 2026 MirageML. Все права защищены.</p>
+                        <p class="made-with-love">
+                            Сделано с <i class="fas fa-heart"></i> в России
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 
 </html>
