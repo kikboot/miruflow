@@ -93,12 +93,228 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// ==========================================
+// Google OAuth 2.0 Endpoints
+// ==========================================
+
+// Endpoint для получения Google Client ID
+app.get('/api/config/google-client-id', (req, res) => {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+
+    if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+        return res.status(503).json({
+            error: 'Google OAuth не настроен. Укажите GOOGLE_CLIENT_ID в .env файле'
+        });
+    }
+
+    res.json({ clientId });
+});
+
+// Проверка существования пользователя по Google credential
+app.post('/api/auth/google/check', async (req, res) => {
+    try {
+        const { OAuth2Client } = require('google-auth-library');
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+
+        if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+            return res.status(503).json({ exists: false, error: 'Google OAuth не настроен' });
+        }
+
+        const client = new OAuth2Client(clientId);
+        const ticket = await client.verifyIdToken({
+            idToken: req.body.credential,
+            audience: clientId
+        });
+        const payload = ticket.getPayload();
+
+        const user = await db.getUserByEmail(payload.email);
+        res.json({ exists: !!user, email: payload.email });
+    } catch (error) {
+        console.error('[Google Check] Ошибка:', error);
+        res.json({ exists: false });
+    }
+});
+
+// Проверка существования пользователя по email
+app.post('/api/auth/google/check-email', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ exists: false, error: 'Email не указан' });
+
+        const user = await db.getUserByEmail(email);
+        res.json({ exists: !!user });
+    } catch (error) {
+        console.error('[Check Email] Ошибка:', error);
+        res.json({ exists: false });
+    }
+});
+
+// Endpoint для авторизации через Google
+app.post('/api/auth/google', async (req, res) => {
+    try {
+        const { OAuth2Client } = require('google-auth-library');
+
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+            return res.status(503).json({
+                error: 'Google OAuth не настроен. Обратитесь к администратору.'
+            });
+        }
+
+        const client = new OAuth2Client(clientId);
+
+        let payload;
+
+        // Проверяем credential (ID token)
+        if (req.body.credential) {
+            const ticket = await client.verifyIdToken({
+                idToken: req.body.credential,
+                audience: clientId
+            });
+            payload = ticket.getPayload();
+        }
+        // Проверяем access_token
+        else if (req.body.access_token) {
+            // Получаем информацию о пользователе из Google API
+            const https = require('https');
+
+            const userInfo = await new Promise((resolve, reject) => {
+                https.get(
+                    `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${req.body.access_token}`,
+                    (response) => {
+                        let data = '';
+                        response.on('data', chunk => data += chunk);
+                        response.on('end', () => {
+                            try {
+                                resolve(JSON.parse(data));
+                            } catch (e) {
+                                reject(new Error('Не удалось распарсить ответ Google'));
+                            }
+                        });
+                    }
+                ).on('error', reject);
+            });
+
+            payload = {
+                email: userInfo.email,
+                name: userInfo.name,
+                picture: userInfo.picture,
+                email_verified: userInfo.email_verified
+            };
+        } else {
+            return res.status(400).json({ error: 'Не указан credential или access_token' });
+        }
+
+        const { email, name, picture, email_verified } = payload;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Не удалось получить email из Google аккаунта' });
+        }
+
+        // Ищем пользователя в базе
+        let user = await db.getUserByEmail(email);
+
+        if (!user) {
+            const acceptTerms = req.body.acceptTerms === true;
+
+            if (!acceptTerms) {
+                return res.status(400).json({
+                    error: 'Необходимо принять пользовательское соглашение',
+                    termsRequired: true
+                });
+            }
+
+            // Создаём нового пользователя
+            const newUser = {
+                id: 'google_' + Date.now().toString(),
+                name: name || email.split('@')[0],
+                email: email,
+                password: await bcrypt.hash(Math.random().toString(36) + Date.now().toString(), 10),
+                role: 'user',
+                theme: 'dark',
+                country: 'ru',
+                phone: '',
+                avatar: picture || null,
+                terms_accepted_at: new Date().toISOString(),
+                createdAt: new Date().toISOString()
+            };
+
+            await db.createUser(newUser);
+            user = await db.getUserByEmail(email);
+
+            console.log(`[Google OAuth] Создан новый пользователь: ${email}`);
+        } else {
+            console.log(`[Google OAuth] Вход существующего пользователя: ${email}`);
+        }
+
+        // Создаём JWT токен
+        const token = jwt.sign(
+            { userId: user.id, email: user.email, role: user.role || 'user' },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // Записываем сессию
+        const device = getDeviceInfo(req.headers['user-agent']);
+        const ip = req.ip || req.connection.remoteAddress;
+        const location = getLocationByIP(ip);
+
+        const newSession = {
+            id: Date.now().toString(),
+            user_id: user.id,
+            token,
+            device,
+            ip,
+            location
+        };
+
+        await db.createSession(newSession);
+
+        // Устанавливаем куки
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+        });
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role || 'user',
+                avatar: user.avatar || user.name.substring(0, 2).toUpperCase()
+            }
+        });
+    } catch (error) {
+        console.error('[Google OAuth] Ошибка:', error);
+
+        if (error.message && error.message.includes('Token used too late')) {
+            return res.status(401).json({ error: 'Токен Google истёк. Обновите страницу.' });
+        }
+
+        if (error.message && error.message.includes('Wrong recipient')) {
+            return res.status(401).json({ error: 'Неверный Google Client ID' });
+        }
+
+        res.status(500).json({ error: 'Ошибка авторизации через Google' });
+    }
+});
+
 app.post('/api/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, acceptTerms } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ error: 'Все поля обязательны' });
+        }
+
+        if (!acceptTerms) {
+            return res.status(400).json({ error: 'Необходимо принять пользовательское соглашение' });
         }
 
         const existingUser = await db.getUserByEmail(email);
@@ -115,6 +331,7 @@ app.post('/api/register', async (req, res) => {
             role: 'user',
             theme: 'dark',
             country: 'ru',
+            terms_accepted_at: new Date().toISOString(),
             createdAt: new Date().toISOString()
         };
 
@@ -748,7 +965,9 @@ app.get('/admin/users', requireAdminAuth, async (req, res) => {
                                             </span>
                                         ` : `
                                             <a href="/admin/users/edit/${u.id}" class="btn btn-primary"><i class="fas fa-edit"></i></a>
-                                            <a href="/admin/users/delete/${u.id}" class="btn btn-danger" onclick="return confirm('Удалить пользователя?')"><i class="fas fa-trash"></i></a>
+                                            <form method="POST" action="/admin/users/delete/${u.id}" style="display: inline;" onsubmit="return confirm('Удалить пользователя ${u.name}?')">
+                                                <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i></button>
+                                            </form>
                                         `}
                                     </td>
                                 ` : ''}
@@ -777,6 +996,37 @@ app.get('/admin/users', requireAdminAuth, async (req, res) => {
     } catch (error) {
         console.error('[Admin Users] Ошибка:', error);
         res.status(500).send('Ошибка сервера');
+    }
+});
+
+// Удаление пользователя из админки (POST)
+app.post('/admin/users/delete/:id', requireAdminAuth, requireDeveloper, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await db.getUserById(id);
+
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+
+        // Нельзя удалить самого себя
+        if (id === req.session.adminId) {
+            return res.status(403).json({ error: 'Нельзя удалить свой аккаунт' });
+        }
+
+        // Нельзя удалить разработчика (защита от случайного удаления)
+        if (user.role === 'developer') {
+            return res.status(403).json({ error: 'Нельзя удалить аккаунт разработчика' });
+        }
+
+        await db.deleteUser(id);
+
+        console.log(`[Admin] Пользователь удалён: ${user.email} (${id})`);
+
+        res.redirect('/admin/users');
+    } catch (error) {
+        console.error('[Delete User] Ошибка:', error);
+        res.status(500).send('Ошибка при удалении пользователя');
     }
 });
 

@@ -41,12 +41,12 @@ async function getUserByEmail(email) {
 }
 
 async function createUser(user) {
-    const { id, name, email, password, role, role_display, theme, country, phone, avatar } = user;
+    const { id, name, email, password, role, role_display, theme, country, phone, avatar, terms_accepted_at } = user;
     const result = await pool.query(
-        `INSERT INTO users (id, name, email, password, role, role_display, theme, country, phone, avatar, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)
+        `INSERT INTO users (id, name, email, password, role, role_display, theme, country, phone, avatar, terms_accepted_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
          RETURNING *`,
-        [id, name, email, password, role || 'user', role_display, theme || 'dark', country || 'ru', phone, avatar]
+        [id, name, email, password, role || 'user', role_display, theme || 'dark', country || 'ru', phone, avatar, terms_accepted_at || null]
     );
     return result.rows[0];
 }

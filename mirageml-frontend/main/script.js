@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkAuthStatus();
 
+    // Инициализация Google OAuth
+    initGoogleAuth();
+
+    // Инициализация обработчиков пользовательского соглашения
+    initTermsHandlers();
+
     const rememberedEmail = localStorage.getItem('rememberedEmail');
     if (rememberedEmail) {
         const emailInput = document.getElementById('login-email');
@@ -848,12 +854,12 @@ async function handleLogin(e) {
 
 async function handleRegister(e) {
     e.preventDefault();
-    
+
     const nameInput = document.getElementById('register-name');
     const emailInput = document.getElementById('register-email');
     const passwordInput = document.getElementById('register-password');
     const confirmInput = document.getElementById('register-confirm');
-    
+
     const name = nameInput.value.trim();
     const email = emailInput.value.trim();
     const password = passwordInput.value;
@@ -864,7 +870,7 @@ async function handleRegister(e) {
     const isNameValid = validateInput(nameInput);
     const isEmailValid = validateInput(emailInput);
     const isPasswordValid = validateInput(passwordInput);
-    
+
     if (!isNameValid || !isEmailValid || !isPasswordValid) {
         return;
     }
@@ -874,70 +880,10 @@ async function handleRegister(e) {
         return;
     }
 
-    try {
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="spinner"></span> Регистрация...';
-        submitBtn.disabled = true;
-
-        const response = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
-
-        let data = {};
-        if (response.headers.get('content-type') && response.headers.get('content-type').includes('application/json')) {
-            if(response.ok) {
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    data = { success: true };
-                }
-            } else {
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    data = { error: await response.text() || 'Ошибка сервера' };
-                }
-            }
-        } else {
-            if(response.ok) {
-                data = { success: true };
-            } else {
-                data = { error: await response.text() || 'Ответ сервера не в формате JSON' };
-            }
-        }
-
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-
-        if (response.ok && (data.success || response.status === 201)) {
-            showNotification('register-notification', 'Регистрация успешна! Теперь войдите в систему.', 'success');
-            document.getElementById('register-form').reset();
-
-            setTimeout(() => {
-                hideNotification('register-notification');
-                switchModals(registerModal, loginModal);
-            }, 2000);
-        } else {
-            handleRegisterError(response.status, data.error || 'Неизвестная ошибка');
-        }
-    } catch (error) {
-        console.error('Ошибка при регистрации:', error);
-
-        if (error instanceof TypeError && error.message.includes('fetch')) {
-            showNotification('register-notification', 'Не удается подключиться к серверу. Проверьте, что сервер запущен на порту 3001.');
-        } else {
-            showNotification('register-notification', `Ошибка соединения с сервером: ${error.message}`);
-        }
-
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.innerHTML = 'Зарегистрироваться';
-            submitBtn.disabled = false;
-        }
-    }
+    // Сохраняем данные и показываем пользовательское соглашение
+    pendingRegistration = { name, email, password };
+    hideModal(document.getElementById('register-modal'));
+    showTermsModal();
 }
 
 function handleLoginError(status, error) {
@@ -965,6 +911,424 @@ function handleRegisterError(status, error) {
         showNotification('register-notification', 'Внутренняя ошибка сервера. Попробуйте позже.');
     } else {
         showNotification('register-notification', error || 'Ошибка регистрации');
+    }
+}
+
+// ==========================================
+// Google OAuth 2.0
+// ==========================================
+
+function initGoogleAuth() {
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    const googleRegisterBtn = document.getElementById('google-register-btn');
+
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', () => {
+            handleGoogleLogin('login');
+        });
+    }
+
+    if (googleRegisterBtn) {
+        googleRegisterBtn.addEventListener('click', () => {
+            handleGoogleLogin('register');
+        });
+    }
+}
+
+async function handleGoogleLogin(mode) {
+    const clientId = await getGoogleClientId();
+
+    if (!clientId) {
+        showNotification('login-notification', 'Google авторизация не настроена. Обратитесь к администратору.');
+        return;
+    }
+
+    if (typeof google === 'undefined' || !google.accounts) {
+        showNotification('login-notification', 'Google SDK не загрузился. Обновите страницу.');
+        return;
+    }
+
+    console.log('[Google OAuth] Инициализация Google Identity Services');
+
+    google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (response) => {
+            console.log('[Google OAuth] Получен credential от Google');
+
+            // Проверяем существует ли пользователь
+            try {
+                const existsResult = await checkGoogleUserExists(response.credential);
+                console.log('[Google OAuth] Проверка пользователя:', existsResult);
+
+                if (existsResult.exists) {
+                    console.log('[Google OAuth] Пользователь существует — авторизуем');
+                    await submitGoogleAuthDirect({ credential: response.credential }, mode);
+                } else {
+                    console.log('[Google OAuth] Новый пользователь — показываем соглашение');
+                    pendingGoogleData = { credential: response.credential, mode };
+                    hideModal(document.getElementById('login-modal'));
+                    hideModal(document.getElementById('register-modal'));
+                    showTermsModal();
+                }
+            } catch (error) {
+                console.error('[Google OAuth] Ошибка проверки:', error);
+                showNotification('login-notification', `Ошибка: ${error.message}`);
+                resetGoogleButtons();
+            }
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true
+    });
+
+    // Показываем Google One Tap или popup
+    google.accounts.id.prompt((notification) => {
+        console.log('[Google OAuth] Prompt notification:', notification);
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log('[Google OAuth] One Tap недоступен — используем popup');
+            google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'email profile',
+                callback: (tokenResponse) => {
+                    console.log('[Google OAuth] Получен access_token:', tokenResponse);
+                    if (tokenResponse.access_token) {
+                        fetchGoogleProfile(tokenResponse.access_token, mode);
+                    } else {
+                        showNotification('login-notification', 'Ошибка получения данных из Google');
+                        resetGoogleButtons();
+                    }
+                }
+            }).requestAccessToken();
+        }
+    });
+}
+
+async function checkGoogleUserExists(credential) {
+    try {
+        const response = await fetch('/api/auth/google/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential })
+        });
+        if (!response.ok) return { exists: false };
+        return await response.json();
+    } catch (error) {
+        console.error('Ошибка проверки пользователя Google:', error);
+        return { exists: false };
+    }
+}
+
+async function submitGoogleAuthDirect(authData, mode) {
+    try {
+        const submitBtn = mode === 'login'
+            ? document.getElementById('google-login-btn')
+            : document.getElementById('google-register-btn');
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Авторизация...';
+        }
+
+        const response = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...authData, acceptTerms: true })
+        });
+
+        const data = await response.json();
+
+        if (submitBtn) {
+            submitBtn.innerHTML = mode === 'login'
+                ? '<span>Войти через Google</span>'
+                : '<span>Зарегистрироваться через Google</span>';
+            submitBtn.disabled = false;
+        }
+
+        if (response.ok && data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('authToken', data.token);
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('authToken', data.token);
+
+            updateAuthUI(data.user);
+            document.querySelectorAll('.modal').forEach(m => hideModal(m));
+
+            const message = mode === 'login' ? 'Вход через Google выполнен!' : 'Регистрация через Google успешна!';
+            showSuccessMessage(message);
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification('login-notification', data.error || 'Ошибка авторизации через Google');
+            resetGoogleButtons();
+        }
+    } catch (error) {
+        console.error('Google OAuth ошибка:', error);
+        showNotification('login-notification', `Ошибка соединения: ${error.message}`);
+        resetGoogleButtons();
+    }
+}
+
+async function fetchGoogleProfile(accessToken, mode) {
+    try {
+        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) throw new Error('Не удалось получить профиль Google');
+
+        const profile = await response.json();
+
+        const emailCheck = await fetch('/api/auth/google/check-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: profile.email })
+        });
+
+        const emailExists = emailCheck.ok && (await emailCheck.json()).exists;
+
+        if (emailExists) {
+            await submitGoogleAuthDirect({ access_token: accessToken }, mode);
+        } else {
+            pendingGoogleData = { access_token: accessToken, mode };
+            hideModal(loginModal);
+            hideModal(registerModal);
+            showTermsModal();
+        }
+    } catch (error) {
+        console.error('Google Profile ошибка:', error);
+        showNotification('login-notification', `Ошибка получения профиля: ${error.message}`);
+        resetGoogleButtons();
+    }
+}
+
+async function getGoogleClientId() {
+    try {
+        const response = await fetch('/api/config/google-client-id');
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data.clientId;
+    } catch (error) {
+        console.error('Ошибка получения Google Client ID:', error);
+        return null;
+    }
+}
+
+function resetGoogleButtons() {
+    const loginBtn = document.getElementById('google-login-btn');
+    const registerBtn = document.getElementById('google-register-btn');
+
+    if (loginBtn) {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = `
+            <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Войти через Google</span>`;
+    }
+
+    if (registerBtn) {
+        registerBtn.disabled = false;
+        registerBtn.innerHTML = `
+            <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Зарегистрироваться через Google</span>`;
+    }
+}
+
+// ==========================================
+// Пользовательское соглашение
+// ==========================================
+
+let pendingRegistration = null;
+let pendingGoogleData = null;
+
+function initTermsHandlers() {
+    const acceptCheckbox = document.getElementById('accept-terms');
+    const acceptBtn = document.getElementById('terms-accept-btn');
+    const declineBtn = document.getElementById('terms-decline-btn');
+    const termsModal = document.getElementById('terms-modal');
+    const closeBtn = termsModal?.querySelector('.close-btn');
+
+    // Включаем/выключаем кнопку принятия
+    if (acceptCheckbox && acceptBtn) {
+        acceptCheckbox.addEventListener('change', () => {
+            acceptBtn.disabled = !acceptCheckbox.checked;
+        });
+    }
+
+    // Кнопка "Принять и продолжить"
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', async () => {
+            if (!acceptCheckbox.checked) return;
+
+            // Обычная регистрация
+            if (pendingRegistration) {
+                const { name, email, password } = pendingRegistration;
+                pendingRegistration = null;
+                hideModal(termsModal);
+                await submitRegistration(name, email, password);
+            }
+            // Google OAuth
+            else if (pendingGoogleData) {
+                const { credential, access_token } = pendingGoogleData;
+                pendingGoogleData = null;
+                hideModal(termsModal);
+                await submitGoogleAuth({ credential, access_token });
+            }
+        });
+    }
+
+    // Кнопка "Отклонить"
+    if (declineBtn) {
+        declineBtn.addEventListener('click', () => {
+            pendingRegistration = null;
+            pendingGoogleData = null;
+            hideModal(termsModal);
+            showNotification('register-notification', 'Для продолжения необходимо принять условия пользовательского соглашения');
+        });
+    }
+
+    // Крестик закрытия
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            pendingRegistration = null;
+            pendingGoogleData = null;
+            hideModal(termsModal);
+        });
+    }
+
+    // Закрытие по клику вне модалки
+    if (termsModal) {
+        termsModal.addEventListener('click', (e) => {
+            if (e.target === termsModal) {
+                pendingRegistration = null;
+                pendingGoogleData = null;
+                hideModal(termsModal);
+            }
+        });
+    }
+}
+
+function showTermsModal(callback) {
+    const termsModal = document.getElementById('terms-modal');
+    const acceptCheckbox = document.getElementById('accept-terms');
+    const acceptBtn = document.getElementById('terms-accept-btn');
+
+    if (acceptCheckbox) acceptCheckbox.checked = false;
+    if (acceptBtn) acceptBtn.disabled = true;
+
+    showModal(termsModal);
+}
+
+async function submitRegistration(name, email, password) {
+    try {
+        const registerForm = document.getElementById('register-form');
+        const submitBtn = registerForm?.querySelector('button[type="submit"]');
+        const originalText = submitBtn?.innerHTML || 'Зарегистрироваться';
+
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="spinner"></span> Регистрация...';
+            submitBtn.disabled = true;
+        }
+
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, acceptTerms: true })
+        });
+
+        let data = {};
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            if (response.ok) {
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = { success: false, error: 'Ответ сервера не в формате JSON' };
+                }
+            } else {
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = { error: await response.text() || 'Ошибка сервера' };
+                }
+            }
+        } else {
+            data = response.ok ? { success: true } : { error: await response.text() || 'Ошибка сервера' };
+        }
+
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+
+        if (response.ok && (data.success || response.status === 201)) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('authToken', data.token);
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('authToken', data.token);
+
+            updateAuthUI(data.user);
+            document.querySelectorAll('.modal').forEach(m => hideModal(m));
+            showSuccessMessage('Регистрация успешна! Добро пожаловать в MirageML!');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification('register-notification', data.error || 'Ошибка регистрации');
+        }
+    } catch (error) {
+        console.error('Ошибка при регистрации:', error);
+        showNotification('register-notification', `Ошибка соединения: ${error.message}`);
+    }
+}
+
+async function submitGoogleAuth(authData) {
+    try {
+        const submitBtn = document.getElementById('google-register-btn') || document.getElementById('google-login-btn');
+        const originalText = submitBtn?.innerHTML || 'Авторизация...';
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Авторизация...';
+        }
+
+        const body = authData.credential ? { credential: authData.credential } : { access_token: authData.access_token };
+
+        const response = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...body, acceptTerms: true })
+        });
+
+        const data = await response.json();
+
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+
+        if (response.ok && data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('authToken', data.token);
+            sessionStorage.setItem('token', data.token);
+            sessionStorage.setItem('authToken', data.token);
+
+            updateAuthUI(data.user);
+            document.querySelectorAll('.modal').forEach(m => hideModal(m));
+            showSuccessMessage('Вход через Google выполнен! Добро пожаловать!');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showNotification('login-notification', data.error || 'Ошибка авторизации через Google');
+            resetGoogleButtons();
+        }
+    } catch (error) {
+        console.error('Google OAuth ошибка:', error);
+        showNotification('login-notification', `Ошибка соединения: ${error.message}`);
+        resetGoogleButtons();
     }
 }
 
