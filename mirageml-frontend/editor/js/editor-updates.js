@@ -5,6 +5,42 @@ window.updateSectionName = function(value) {
     }
 };
 
+function parseValueWithFormula(value) {
+    if (typeof value === 'number') return value;
+    if (typeof value !== 'string') return value;
+    
+    const trimmed = value.trim();
+    
+    if (trimmed === 'auto' || trimmed === 'inherit' || trimmed === 'initial') {
+        return { value: trimmed, unit: '' };
+    }
+    
+    if (trimmed.includes('+') || trimmed.includes('-') || trimmed.includes('*') || trimmed.includes('/')) {
+        try {
+            const cleanExpr = trimmed.replace(/(\d+)(px|%)?/g, (match, num, unit) => num);
+            let result = eval(cleanExpr);
+            
+            const unitMatch = trimmed.match(/(\d+)(px|%|rem|em|vh|vw)?/);
+            const unit = unitMatch ? unitMatch[2] || 'px' : 'px';
+            
+            return { value: Math.round(result), unit: unit };
+        } catch (e) {
+            const match = value.match(/^(\d+)(px|%|rem|em|vh|vw)?$/);
+            if (match) {
+                return { value: parseInt(match[1]), unit: match[2] || 'px' };
+            }
+            return value;
+        }
+    }
+    
+    const match = trimmed.match(/^(\d+)(px|%|rem|em|vh|vw)?$/);
+    if (match) {
+        return { value: parseInt(match[1]), unit: match[2] || 'px' };
+    }
+    
+    return value;
+}
+
 window.updateSectionSizeWithFormula = function(width, height) {
     if (!state.selectedSection) return;
     

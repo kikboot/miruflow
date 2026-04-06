@@ -903,13 +903,19 @@ window.updateBgBlur = function(value) {
 
 window.updateBgFilter = function() {
     if (state.selectedSection) {
+        const blur = document.getElementById('bg-blur')?.value || 0;
         const brightness = document.getElementById('bg-brightness')?.value || 100;
         const contrast = document.getElementById('bg-contrast')?.value || 100;
         const saturate = document.getElementById('bg-saturate')?.value || 100;
+        const sepia = document.getElementById('bg-sepia')?.value || 0;
+        const invert = document.getElementById('bg-invert')?.value || 0;
         
+        document.getElementById('bg-blur-value').textContent = `${blur}px`;
         document.getElementById('bg-brightness-value').textContent = `${brightness}%`;
         document.getElementById('bg-contrast-value').textContent = `${contrast}%`;
         document.getElementById('bg-saturate-value').textContent = `${saturate}%`;
+        document.getElementById('bg-sepia-value').textContent = `${sepia}%`;
+        document.getElementById('bg-invert-value').textContent = `${invert}%`;
         
         applyBgFilters();
     }
@@ -922,8 +928,10 @@ function applyBgFilters() {
     const brightness = document.getElementById('bg-brightness')?.value || 100;
     const contrast = document.getElementById('bg-contrast')?.value || 100;
     const saturate = document.getElementById('bg-saturate')?.value || 100;
+    const sepia = document.getElementById('bg-sepia')?.value || 0;
+    const invert = document.getElementById('bg-invert')?.value || 0;
     
-    state.selectedSection.element.style.filter = `blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%)`;
+    state.selectedSection.element.style.filter = `blur(${blur}px) brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) sepia(${sepia}%) invert(${invert}%)`;
 }
 
 function renderElementProperties(element) {
@@ -1138,7 +1146,14 @@ window.updateSectionPadding = function(side, value) {
 
 window.updateSectionBgColor = function(value) {
     if (state.selectedSection) {
-        state.selectedSection.element.style.backgroundColor = value;
+        const opacity = document.getElementById('bg-opacity')?.value || 100;
+        const hex = value.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+
+        state.selectedSection.element.style.background = `rgba(${r}, ${g}, ${b}, ${opacity/100})`;
+        
         const colorInput = document.getElementById('prop-bg-color');
         const colorText = document.getElementById('prop-bg-color-text');
         if (colorInput && colorText) {
@@ -1286,7 +1301,7 @@ window.deleteSelected = function(sectionId) {
         state.selectedSection = null;
         state.selectedElement = null;
         DOM.propertiesContent.innerHTML = `<div class="empty-state"><i class="fas fa-sliders-h"></i><p>Выберите секцию<br>для редактирования</p></div>`;
-        DOM.floatingToolbar.style.display = 'none';
+        hideFloatingToolbar();
         saveToHistory();
         updateElementsCount();
         if (state.sections.length === 0) DOM.canvasPlaceholder.style.display = 'flex';
@@ -1332,8 +1347,138 @@ window.moveSectionDown = function(sectionId) {
     }
 };
 
+function parseValueWithFormula(value) {
+    if (typeof value === 'number') return value;
+    if (typeof value !== 'string') return value;
+    
+    const trimmed = value.trim();
+    
+    if (trimmed === 'auto' || trimmed === 'inherit' || trimmed === 'initial') {
+        return { value: trimmed, unit: '' };
+    }
+    
+    if (trimmed.includes('+') || trimmed.includes('-') || trimmed.includes('*') || trimmed.includes('/')) {
+        try {
+            const cleanExpr = trimmed.replace(/(\d+)(px|%)?/g, (match, num, unit) => num);
+            let result = eval(cleanExpr);
+            
+            const unitMatch = trimmed.match(/(\d+)(px|%|rem|em|vh|vw)?/);
+            const unit = unitMatch ? unitMatch[2] || 'px' : 'px';
+            
+            return { value: Math.round(result), unit: unit };
+        } catch (e) {
+            const match = value.match(/^(\d+)(px|%|rem|em|vh|vw)?$/);
+            if (match) {
+                return { value: parseInt(match[1]), unit: match[2] || 'px' };
+            }
+            return value;
+        }
+    }
+    
+    const match = trimmed.match(/^(\d+)(px|%|rem|em|vh|vw)?$/);
+    if (match) {
+        return { value: parseInt(match[1]), unit: match[2] || 'px' };
+    }
+    
+    return value;
+}
+
+window.updateSectionSizeWithFormula = function(width, height) {
+    if (!state.selectedSection) return;
+    
+    const widthResult = parseValueWithFormula(width);
+    const heightResult = parseValueWithFormula(height);
+    
+    const widthValue = typeof widthResult === 'object' ? widthResult.value : widthResult;
+    const heightValue = typeof heightResult === 'object' ? heightResult.value : heightResult;
+    
+    state.selectedSection.element.style.width = `${widthValue}px`;
+    state.selectedSection.element.style.height = `${heightValue}px`;
+    saveToHistory();
+};
+
+window.updateSectionPaddingWithFormula = function(side, value) {
+    if (!state.selectedSection) return;
+    
+    const result = parseValueWithFormula(value);
+    const pixelValue = typeof result === 'object' ? result.value : result;
+    
+    if (side === 'top') state.selectedSection.element.style.paddingTop = `${pixelValue}px`;
+    if (side === 'bottom') state.selectedSection.element.style.paddingBottom = `${pixelValue}px`;
+    if (side === 'left') state.selectedSection.element.style.paddingLeft = `${pixelValue}px`;
+    if (side === 'right') state.selectedSection.element.style.paddingRight = `${pixelValue}px`;
+    
+    saveToHistory();
+};
+
+window.updateElementOpacity = function(value) {
+    if (state.selectedElement) {
+        const valueEl = document.getElementById('el-opacity-value');
+        if (valueEl) valueEl.textContent = `${value}%`;
+        state.selectedElement.element.style.opacity = value / 100;
+    }
+};
+
+window.updateElementBorder = function() {
+    if (!state.selectedElement) return;
+    
+    const width = document.getElementById('el-border-width')?.value || '0';
+    const style = document.getElementById('el-border-style')?.value || 'none';
+    const color = document.getElementById('el-border-color')?.value || '#6366f1';
+    
+    state.selectedElement.element.style.border = `${width}px ${style} ${color}`;
+    
+    const colorInput = document.getElementById('el-border-color');
+    const colorText = document.getElementById('el-border-color-text');
+    if (colorInput && colorText) {
+        if (colorInput.value !== color) colorInput.value = color;
+        if (colorText.value !== color) colorText.value = color;
+    }
+    
+    saveToHistory();
+};
+
+window.updateElementFilters = function() {
+    if (!state.selectedElement) return;
+    
+    const brightness = document.getElementById('el-brightness')?.value || 100;
+    const contrast = document.getElementById('el-contrast')?.value || 100;
+    const saturate = document.getElementById('el-saturate')?.value || 100;
+    const sepia = document.getElementById('el-sepia')?.value || 0;
+    const invert = document.getElementById('el-invert')?.value || 0;
+    const blur = document.getElementById('el-blur')?.value || 0;
+    
+    const brightnessEl = document.getElementById('el-brightness-value');
+    const contrastEl = document.getElementById('el-contrast-value');
+    const saturateEl = document.getElementById('el-saturate-value');
+    const sepiaEl = document.getElementById('el-sepia-value');
+    const invertEl = document.getElementById('el-invert-value');
+    const blurEl = document.getElementById('el-blur-value');
+    
+    if (brightnessEl) brightnessEl.textContent = `${brightness}%`;
+    if (contrastEl) contrastEl.textContent = `${contrast}%`;
+    if (saturateEl) saturateEl.textContent = `${saturate}%`;
+    if (sepiaEl) sepiaEl.textContent = `${sepia}%`;
+    if (invertEl) invertEl.textContent = `${invert}%`;
+    if (blurEl) blurEl.textContent = `${blur}px`;
+    
+    state.selectedElement.element.style.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) sepia(${sepia}%) invert(${invert}%) blur(${blur}px)`;
+    
+    saveToHistory();
+};
+
 function showFloatingToolbar() {
-    if (DOM.floatingToolbar) DOM.floatingToolbar.style.display = 'flex';
+    const actionsGroup = document.getElementById('section-actions-group');
+    if (actionsGroup) {
+        actionsGroup.style.display = 'flex';
+    }
+}
+
+function hideFloatingToolbar() {
+    const actionsGroup = document.getElementById('section-actions-group');
+    if (actionsGroup) {
+        actionsGroup.style.display = 'none';
+    }
 }
 
 function setupToolbar() {
@@ -1389,7 +1534,7 @@ function setupCanvasInteractions() {
             });
             state.selectedSection = null;
             state.selectedElement = null;
-            DOM.floatingToolbar.style.display = 'none';
+            hideFloatingToolbar();
             DOM.propertiesContent.innerHTML = `<div class="empty-state"><i class="fas fa-sliders-h"></i><p>Выберите секцию<br>для редактирования</p></div>`;
             updateSectionCounter();
         }

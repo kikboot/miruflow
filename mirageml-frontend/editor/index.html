@@ -49,6 +49,26 @@
                 
                 <div class="toolbar-divider"></div>
                 
+                <div class="toolbar-group" id="section-actions-group" style="display: none;">
+                    <button class="toolbar-btn" onclick="duplicateSelected()" title="Дублировать">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="moveSectionUp()" title="Вверх">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="moveSectionDown()" title="Вниз">
+                        <i class="fas fa-arrow-down"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="showAddElementModal()" title="Добавить элемент">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="toolbar-btn toolbar-btn-danger" onclick="deleteSelected()" title="Удалить">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                
+                <div class="toolbar-divider"></div>
+                 
                 <div class="toolbar-group">
                     <button class="toolbar-btn" id="grid-btn" title="Сетка">
                         <i class="fas fa-th"></i>
@@ -269,27 +289,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="floating-toolbar" id="floating-toolbar" style="display: none;">
-                    <button class="toolbar-btn" onclick="duplicateSelected()" title="Дублировать">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    <div class="toolbar-divider-vertical"></div>
-                    <button class="toolbar-btn" onclick="moveSectionUp()" title="Вверх">
-                        <i class="fas fa-arrow-up"></i>
-                    </button>
-                    <button class="toolbar-btn" onclick="moveSectionDown()" title="Вниз">
-                        <i class="fas fa-arrow-down"></i>
-                    </button>
-                    <div class="toolbar-divider-vertical"></div>
-                    <button class="toolbar-btn" onclick="showAddElementModal()" title="Добавить элемент">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <div class="toolbar-divider-vertical"></div>
-                    <button class="toolbar-btn toolbar-btn-danger" onclick="deleteSelected()" title="Удалить">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 </div>
             </main>
 
