@@ -20,7 +20,7 @@ if not exist "%ENCRYPTED_FILE%" (
 if not exist "%AGE_DIR%\age\age.exe" (
     echo Downloading age...
     powershell -Command "Invoke-WebRequest -Uri 'https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-windows-amd64.zip' -OutFile 'age.zip'"
-    powershell -Command "Expand-Archive -Path age.zip -DestinationPath age -Force"
+    powershell -Command "Expand-Archive -Path age.zip -DestinationPath %AGE_DIR% -Force"
     del age.zip
 )
 
