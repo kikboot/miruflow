@@ -1,4 +1,4 @@
-const API_BASE_URL = (() => {
+window.API_BASE_URL = (() => {
     if (window.API_URL) return window.API_URL;
     const currentOrigin = window.location.origin;
     if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
@@ -7,8 +7,8 @@ const API_BASE_URL = (() => {
     return 'https://mirageml.onrender.com';
 })();
 
-window.API_CONFIG = { baseUrl: API_BASE_URL };
-window.API_URL = API_BASE_URL;
+window.API_CONFIG = { baseUrl: window.API_BASE_URL };
+window.API_URL = window.API_BASE_URL;
 
 function getApiUrl(path) {
     return `${API_BASE_URL}${path}`;
