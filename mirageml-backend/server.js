@@ -1567,7 +1567,10 @@ async function startServer() {
     try {
         const dbConnected = await db.testConnection();
         
-        if (!dbConnected) {
+        if (dbConnected) {
+            console.log('Создание таблиц...');
+            await db.initDatabase();
+        } else {
             console.log('\n PostgreSQL не подключен. Запуск без базы данных...\n');
         }
 

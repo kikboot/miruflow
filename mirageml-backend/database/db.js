@@ -1,16 +1,58 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'mirageml',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-});
+let poolConfig;
+
+if (process.env.DATABASE_URL) {
+    poolConfig = {
+        connectionString: process.env.DATABASE_URL,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+    };
+} else {
+    poolConfig = {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT) || 5432,
+        database: process.env.DB_NAME || 'mirageml',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+    };
+}
+
+const pool = new Pool(poolConfig);
+
+async function initDatabase() {
+    try {
+        const schema = fs.readFileSync(path.join(__dirname, '001_schema.sql'), 'utf8');
+        await pool.query(schema);
+        console.log('✅ Таблицы созданы');
+        
+        const additionalMigrations = [
+            '002_initial_data.sql',
+            '003_add_terms_accepted_at.sql',
+            '004_add_new_tables.sql',
+            '005_add_reviews_user_id.sql'
+        ];
+        
+        for (const file of additionalMigrations) {
+            const filePath = path.join(__dirname, file);
+            if (fs.existsSync(filePath)) {
+                const migration = fs.readFileSync(filePath, 'utf8');
+                await pool.query(migration);
+                console.log(`✅ ${file} выполнен`);
+            }
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Ошибка инициализации БД:', error.message);
+        return false;
+    }
+}
 
 async function testConnection() {
     try {
@@ -556,6 +598,7 @@ async function getStats() {
 
 module.exports = {
     pool,
+    initDatabase,
     testConnection,
     getAllUsers,
     getUserById,
