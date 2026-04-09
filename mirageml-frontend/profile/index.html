@@ -37,62 +37,9 @@
                         </a>
                     </div>
                 </div>
-
-                <button class="mobile-menu-btn" id="mobile-profile-menu">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
             </div>
         </div>
     </header>
-
-    <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
-    <div class="mobile-profile-menu" id="mobile-profile-menu-content">
-        <div class="mobile-menu-header">
-            <div class="mobile-user-info">
-                <div class="mobile-user-avatar" id="mobile-user-avatar">JD</div>
-                <div>
-                    <div class="mobile-user-name" id="mobile-user-name">Загрузка...</div>
-                    <div class="mobile-user-email" id="mobile-user-email">user@example.com</div>
-                </div>
-            </div>
-            <button class="mobile-menu-close" id="close-mobile-menu">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="mobile-menu-stats">
-        </div>
-        
-        <nav class="mobile-profile-nav">
-            <a href="#" class="mobile-nav-item" data-tab="profile-tab">
-                <i class="fas fa-user-cog"></i>
-                <span>Настройки профиля</span>
-            </a>
-            <a href="#" class="mobile-nav-item" data-tab="security-tab">
-                <i class="fas fa-shield-alt"></i>
-                <span>Безопасность</span>
-            </a>
-            <a href="#" class="mobile-nav-item" data-tab="projects-tab">
-                <i class="fas fa-project-diagram"></i>
-                <span>Мои проекты</span>
-            </a>
-            <a href="#" class="mobile-nav-item mobile-nav-danger" id="mobile-delete-account">
-                <i class="fas fa-trash"></i>
-                <span>Удалить аккаунт</span>
-            </a>
-        </nav>
-        
-        <div class="mobile-menu-actions">
-            <button class="btn btn-primary mobile-full-btn" id="mobile-create-project">
-                <i class="fas fa-plus"></i>
-                <span>Создать проект</span>
-            </button>
-            <button class="btn btn-outline-modern mobile-full-btn" id="mobile-logout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Выйти</span>
-            </button>
-        </div>
-    </div>
 
     <div class="mobile-profile-container">
         <div class="container">
@@ -109,6 +56,27 @@
                     <button class="mobile-tab" data-tab="projects-tab">
                         <i class="fas fa-project-diagram"></i>
                         <span>Проекты</span>
+                    </button>
+                    <button class="mobile-tab" data-tab="other-tab">
+                        <i class="fas fa-ellipsis-h"></i>
+                        <span>Прочие</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="mobile-other-tab" class="mobile-tab-content">
+                <div class="mobile-tab-header">
+                    <h2><i class="fas fa-cog"></i> Прочие настройки</h2>
+                    <p>Дополнительные действия</p>
+                </div>
+                <div class="mobile-other-actions">
+                    <button class="btn btn-outline-danger mobile-full-btn" id="mobile-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Выйти из аккаунта</span>
+                    </button>
+                    <button class="btn btn-danger mobile-full-btn" id="mobile-delete-account">
+                        <i class="fas fa-trash"></i>
+                        <span>Удалить аккаунт</span>
                     </button>
                 </div>
             </div>
