@@ -1530,6 +1530,7 @@ kbd {
     padding: 0 !important;
     border: none !important;
     transition: var(--transition);
+    pointer-events: auto;
 }
 
 .canvas-section:hover {

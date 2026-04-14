@@ -1509,49 +1509,36 @@ function setupCanvasInteractions() {
             return;
         }
 
-        const interactiveElement = e.target.closest('h1, h2, h3, h4, p, button, img, a, i, svg, video, .logo');
+        const sectionEl = e.target.closest('.canvas-section');
         
-        if (interactiveElement) {
-            const sectionEl = interactiveElement.closest('.canvas-section');
-            if (sectionEl) {
-                const section = state.sections.find(s => s.id === sectionEl.id);
-                if (section) {
+        if (sectionEl) {
+            const section = state.sections.find(s => s.id === sectionEl.id);
+            if (section) {
+                const interactiveElement = e.target.closest('h1, h2, h3, h4, p, button, img, a, i, svg, video, .logo');
+                
+                if (interactiveElement) {
                     const element = section.elements.find(el => el.element === interactiveElement);
                     if (element) {
                         selectElement(section.id, element.id, e);
-                        e.stopPropagation();
                         return;
                     }
                 }
+                
+                selectSection(section.id);
+                return;
             }
         }
 
-        if (e.target === DOM.canvas || e.target === DOM.canvasPlaceholder) {
-            document.querySelectorAll('.canvas-section').forEach(el => el.classList.remove('selected'));
-            document.querySelectorAll('.canvas-element-highlight').forEach(el => {
-                el.classList.remove('canvas-element-highlight');
-                el.style.outline = '';
-            });
-            state.selectedSection = null;
-            state.selectedElement = null;
-            hideFloatingToolbar();
-            DOM.propertiesContent.innerHTML = `<div class="empty-state"><i class="fas fa-sliders-h"></i><p>Выберите секцию<br>для редактирования</p></div>`;
-            updateSectionCounter();
-        }
-    });
-
-    DOM.canvas?.addEventListener('click', (e) => {
-        const sectionEl = e.target.closest('.canvas-section');
-        if (sectionEl && !e.target.closest('.section-controls')) {
-            const interactiveElement = e.target.closest('h1, h2, h3, h4, p, button, img, a, i, svg, video, .logo');
-            if (!interactiveElement || interactiveElement === sectionEl) {
-                const section = state.sections.find(s => s.id === sectionEl.id);
-                if (section) {
-                    selectSection(section.id);
-                    e.stopPropagation();
-                }
-            }
-        }
+        document.querySelectorAll('.canvas-section').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('.canvas-element-highlight').forEach(el => {
+            el.classList.remove('canvas-element-highlight');
+            el.style.outline = '';
+        });
+        state.selectedSection = null;
+        state.selectedElement = null;
+        hideFloatingToolbar();
+        DOM.propertiesContent.innerHTML = `<div class="empty-state"><i class="fas fa-sliders-h"></i><p>Выберите секцию<br>для редактирования</p></div>`;
+        updateSectionCounter();
     });
 
     DOM.canvas?.addEventListener('dblclick', (e) => {
@@ -1562,14 +1549,14 @@ function setupCanvasInteractions() {
                 const element = section.elements.find(el => el.element === textElement);
                 if (element) {
                     selectElement(section.id, element.id);
-                    const newText = prompt('Введите текст:', textElement.textContent);
-                    if (newText !== null) {
-                        textElement.textContent = newText;
-                        element.name = getElementName(textElement);
-                        saveToHistory();
-                        renderElementProperties(element);
-                        showToast('Текст обновлён', 'success');
-                    }
+                    return;
+                }
+            }
+            const sectionEl = textElement.closest('.canvas-section');
+            if (sectionEl) {
+                const section = state.sections.find(s => s.id === sectionEl.id);
+                if (section) {
+                    selectSection(section.id);
                 }
             }
         }
