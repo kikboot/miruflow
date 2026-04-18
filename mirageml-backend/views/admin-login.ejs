@@ -9,27 +9,28 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0a0a0e 0%, #141418 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         .login-container {
-            background: white;
+            background: #141418;
             padding: 40px;
             border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             width: 100%;
             max-width: 400px;
+            border: 1px solid #2a2a32;
         }
         h1 {
-            color: #333;
+            color: #ffffff;
             margin-bottom: 10px;
             text-align: center;
         }
         .subtitle {
-            color: #666;
+            color: #a0a0a8;
             text-align: center;
             margin-bottom: 30px;
         }
@@ -39,34 +40,39 @@
         label {
             display: block;
             margin-bottom: 5px;
-            color: #333;
+            color: #ffffff;
             font-weight: 500;
         }
         input[type="email"],
         input[type="password"] {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #2a2a32;
             border-radius: 5px;
             font-size: 16px;
             transition: border-color 0.3s;
+            background: #0a0a0e;
+            color: #ffffff;
+        }
+        input::placeholder {
+            color: #666;
         }
         input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #6366f1;
         }
         .error {
-            background: #fee;
-            color: #c00;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
             padding: 10px 15px;
             border-radius: 5px;
             margin-bottom: 20px;
-            border: 1px solid #fcc;
+            border: 1px solid #ef4444;
         }
         button {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #6366f1;
             color: white;
             border: none;
             border-radius: 5px;

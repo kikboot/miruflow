@@ -150,7 +150,7 @@
         align-items: center;
         gap: 25px;
         padding-bottom: 25px;
-        border-bottom: 2px solid #ecf0f1;
+        border-bottom: 2px solid #2a2a32;
         margin-bottom: 25px;
         justify-content: center;
         text-align: center;
@@ -168,7 +168,7 @@
         width: 100px;
         height: 100px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #6366f1;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -180,13 +180,13 @@
     }
 
     .profile-info h2 {
-        color: #2c3e50;
+        color: #ffffff;
         margin-bottom: 8px;
         font-size: 24px;
     }
 
     .profile-email {
-        color: #7f8c8d;
+        color: #a0a0a8;
         margin-bottom: 12px;
         font-size: 14px;
     }
@@ -201,29 +201,29 @@
     }
 
     .badge-developer {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #6366f1;
         color: white;
     }
 
     .badge-moderator {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: #8b5cf6;
         color: white;
     }
 
     .badge-admin {
-        background: #e74c3c;
+        background: #ef4444;
         color: white;
     }
 
     .card-header {
         margin-bottom: 20px;
         padding-bottom: 15px;
-        border-bottom: 1px solid #ecf0f1;
+        border-bottom: 1px solid #2a2a32;
         text-align: center;
     }
 
     .card-header h3 {
-        color: #2c3e50;
+        color: #ffffff;
         font-size: 18px;
         display: flex;
         align-items: center;
@@ -249,7 +249,8 @@
         align-items: center;
         gap: 15px;
         padding: 15px;
-        background: #f8f9fa;
+        background: #141418;
+        border: 1px solid #2a2a32;
         border-radius: 10px;
     }
 
@@ -257,7 +258,7 @@
         width: 50px;
         height: 50px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #6366f1;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -273,14 +274,14 @@
     }
 
     .detail-label {
-        color: #7f8c8d;
+        color: #a0a0a8;
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
     .detail-value {
-        color: #2c3e50;
+        color: #ffffff;
         font-weight: 600;
         font-size: 15px;
     }
@@ -307,7 +308,7 @@
     }
 
     .form-group label {
-        color: #2c3e50;
+        color: #ffffff;
         font-weight: 500;
         display: flex;
         align-items: center;
@@ -321,10 +322,21 @@
     .form-group input,
     .form-group select {
         padding: 12px 15px;
-        border: 2px solid #ecf0f1;
+        border: 2px solid #2a2a32;
         border-radius: 8px;
         font-size: 14px;
         transition: border-color 0.3s;
+        background: #0a0a0e;
+        color: #ffffff;
+        width: 100%;
+    }
+
+    .form-group input::placeholder {
+        color: #666;
+    }
+
+    .form-group select {
+        color: #ffffff;
     }
 
     .form-group input:focus,
@@ -338,7 +350,7 @@
         gap: 12px;
         justify-content: center;
         padding-top: 20px;
-        border-top: 1px solid #ecf0f1;
+        border-top: 1px solid #2a2a32;
     }
 
     .notification {
@@ -360,11 +372,11 @@
     }
 
     .notification.success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background: #10b981;
     }
 
     .notification.error {
-        background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        background: #ef4444;
     }
 
     @media (max-width: 768px) {
