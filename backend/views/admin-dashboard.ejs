@@ -1,0 +1,550 @@
+<% if (!stats) { stats = {}; %>
+    <div class="error-message" style="padding: 20px; background: #fee; color: #c00; border-radius: 8px; margin: 20px;">
+        Ошибка: stats не передан в шаблон
+    </div>
+<% } %>
+
+<% const safeStats = {
+    totalUsers: stats.totalUsers || 0,
+    totalProjects: stats.totalProjects || 0,
+    totalSessions: stats.totalSessions || 0,
+    totalReviews: stats.totalReviews || 0,
+    developerCount: stats.developerCount || 0,
+    moderatorCount: stats.moderatorCount || 0,
+    adminCount: stats.adminCount || 0,
+    userCount: stats.userCount || 0,
+    approvedReviews: stats.approvedReviews || 0,
+    pendingReviews: stats.pendingReviews || 0
+}; %>
+
+<div class="stats-grid">
+    <div class="stat-card" style="border-left-color: #3498db;">
+        <div class="stat-icon" style="background: rgba(52, 152, 219, 0.1);">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Пользователей</h3>
+            <div class="value"><%= safeStats.totalUsers %></div>
+            <div class="stat-change positive">
+                <i class="fas fa-arrow-up"></i> Активных: <%= safeStats.userCount %>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: #27ae60;">
+        <div class="stat-icon" style="background: rgba(39, 174, 96, 0.1);">
+            <i class="fas fa-folder"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Проектов</h3>
+            <div class="value"><%= safeStats.totalProjects %></div>
+            <div class="stat-change">
+                <i class="fas fa-database"></i> Всего создано
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: #f39c12;">
+        <div class="stat-icon" style="background: rgba(243, 156, 18, 0.1);">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Сессий</h3>
+            <div class="value"><%= safeStats.totalSessions %></div>
+            <div class="stat-change">
+                <i class="fas fa-globe"></i> Активных сейчас
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left-color: #9b59b6;">
+        <div class="stat-icon" style="background: rgba(155, 89, 182, 0.1);">
+            <i class="fas fa-comments"></i>
+        </div>
+        <div class="stat-content">
+            <h3>Отзывов</h3>
+            <div class="value"><%= safeStats.totalReviews %></div>
+            <div class="stat-change positive">
+                <i class="fas fa-check"></i> Одобрено: <%= safeStats.approvedReviews %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="charts-grid">
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Пользователи по ролям</h3>
+        </div>
+        <canvas id="rolesChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Статус отзывов</h3>
+        </div>
+        <canvas id="reviewsChart"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-chart-line"></i> Активность сессий</h3>
+    </div>
+    <canvas id="sessionsChart" height="80"></canvas>
+</div>
+
+<div class="info-grid">
+    <div class="card info-card">
+        <div class="info-header">
+            <i class="fas fa-code" style="color: #667eea;"></i>
+            <h4>Разработчики</h4>
+        </div>
+        <div class="info-value"><%= safeStats.developerCount %></div>
+        <p class="info-desc">Полный доступ к системе</p>
+    </div>
+
+    <div class="card info-card">
+        <div class="info-header">
+            <i class="fas fa-user-shield" style="color: #f5576c;"></i>
+            <h4>Модераторы</h4>
+        </div>
+        <div class="info-value"><%= safeStats.moderatorCount %></div>
+        <p class="info-desc">Ограниченный доступ</p>
+    </div>
+
+    <div class="card info-card">
+        <div class="info-header">
+            <i class="fas fa-shield-alt" style="color: #e74c3c;"></i>
+            <h4>Админы</h4>
+        </div>
+        <div class="info-value"><%= safeStats.adminCount %></div>
+        <p class="info-desc">Пользователей с правами админа</p>
+    </div>
+
+    <div class="card info-card">
+        <div class="info-header">
+            <i class="fas fa-user" style="color: #3498db;"></i>
+            <h4>Пользователи</h4>
+        </div>
+        <div class="info-value"><%= safeStats.userCount %></div>
+        <p class="info-desc">Зарегистрированных пользователей</p>
+    </div>
+
+    <div class="card info-card">
+        <div class="info-header">
+            <i class="fas fa-check-circle" style="color: #27ae60;"></i>
+            <h4>Одобренные отзывы</h4>
+        </div>
+        <div class="info-value"><%= safeStats.approvedReviews %></div>
+        <p class="info-desc">Прошли модерацию</p>
+    </div>
+
+    <div class="card info-card">
+        <div class="info-header">
+            <i class="fas fa-hourglass-half" style="color: #f39c12;"></i>
+            <h4>На модерации</h4>
+        </div>
+        <div class="info-value"><%= safeStats.pendingReviews %></div>
+        <p class="info-desc">Ожидают проверки</p>
+    </div>
+</div>
+
+<div class="card system-info">
+    <div class="card-header">
+        <h3><i class="fas fa-info-circle"></i> Информация о системе</h3>
+    </div>
+    <div class="info-table">
+        <div class="info-row">
+            <span class="info-label">Версия панели:</span>
+            <span class="info-value">MiruFlow Admin v1.0.0</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Порт сервера:</span>
+            <span class="info-value"><%= port %></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Дата запуска:</span>
+            <span class="info-value"><%= new Date().toLocaleDateString('ru-RU') %></span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Статус:</span>
+            <span class="info-value"><span class="status-badge">Работает</span></span>
+        </div>
+    </div>
+</div>
+
+<!-- Передаём данные из сервера в JavaScript -->
+<div id="stats-data" 
+     data-developer="<%= safeStats.developerCount || 0 %>"
+     data-moderator="<%= safeStats.moderatorCount || 0 %>"
+     data-admin="<%= safeStats.adminCount || 0 %>"
+     data-user="<%= safeStats.userCount || 0 %>"
+     data-approved="<%= safeStats.approvedReviews || 0 %>"
+     data-pending="<%= safeStats.pendingReviews || 0 %>"
+     data-sessions="<%= safeStats.totalSessions || 0 %>"
+     data-projects="<%= safeStats.totalProjects || 0 %>"
+     style="display: none;">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const statsDataElement = document.getElementById('stats-data');
+    const statsData = {
+        developerCount: parseInt(statsDataElement.dataset.developer),
+        moderatorCount: parseInt(statsDataElement.dataset.moderator),
+        adminCount: parseInt(statsDataElement.dataset.admin),
+        userCount: parseInt(statsDataElement.dataset.user),
+        approvedReviews: parseInt(statsDataElement.dataset.approved),
+        pendingReviews: parseInt(statsDataElement.dataset.pending),
+        totalSessions: parseInt(statsDataElement.dataset.sessions),
+        totalProjects: parseInt(statsDataElement.dataset.projects)
+    };
+
+    const colors = {
+        blue: '#3498db',
+        green: '#27ae60',
+        orange: '#f39c12',
+        purple: '#9b59b6',
+        red: '#e74c3c',
+        teal: '#1abc9c',
+        gray: '#95a5a6',
+        developer: '#667eea',
+        moderator: '#f5576c'
+    };
+
+    const rolesCtx = document.getElementById('rolesChart').getContext('2d');
+    new Chart(rolesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Разработчики', 'Модераторы', 'Админы', 'Пользователи'],
+            datasets: [{
+                data: [statsData.developerCount, statsData.moderatorCount, statsData.adminCount, statsData.userCount],
+                backgroundColor: [colors.developer, colors.moderator, colors.red, colors.blue],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = ((context.raw / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.raw + ' (' + percent + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const reviewsCtx = document.getElementById('reviewsChart').getContext('2d');
+    new Chart(reviewsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Одобренные', 'На модерации'],
+            datasets: [{
+                data: [statsData.approvedReviews, statsData.pendingReviews],
+                backgroundColor: [colors.green, colors.orange],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                            return context.label + ': ' + context.raw + ' (' + percent + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const sessionsCtx = document.getElementById('sessionsChart').getContext('2d');
+    new Chart(sessionsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Пользователи', 'Проекты', 'Сессии', 'Отзывы'],
+            datasets: [{
+                label: 'Количество',
+                data: [
+                    statsData.userCount + statsData.adminCount,
+                    statsData.totalProjects,
+                    statsData.totalSessions,
+                    statsData.approvedReviews + statsData.pendingReviews
+                ],
+                backgroundColor: [
+                    colors.blue,
+                    colors.green,
+                    colors.orange,
+                    colors.purple
+                ],
+                borderRadius: 8,
+                borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        precision: 0
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #141418;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        border-left: 4px solid;
+        border: 1px solid #2a2a32;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .stat-icon i {
+        color: inherit;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-content h3 {
+        color: #a0a0a8;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-content .value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    .stat-change {
+        font-size: 12px;
+        color: #a0a0a8;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .stat-change.positive {
+        color: #27ae60;
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .chart-card {
+        padding: 20px;
+    }
+
+    .card-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .card-header h3 {
+        color: #ffffff;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header h3 i {
+        color: #3498db;
+    }
+
+    canvas {
+        max-height: 300px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .card.info-card {
+        padding: 20px;
+        text-align: center;
+        background-color: #141418 !important;
+        border: 1px solid #2a2a32;
+        border-radius: 12px;
+    }
+
+    .card.info-card .info-value {
+        color: #ffffff;
+    }
+
+    .card.info-card .info-desc {
+        color: #a0a0a8;
+    }
+
+    .info-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .info-header h4 {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .info-value {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+
+    .info-desc {
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .system-info {
+        padding: 25px;
+    }
+
+    .info-table {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .info-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 15px;
+        background: #141418;
+        border-radius: 12px;
+        border: 1px solid #2a2a32;
+    }
+
+    .info-label {
+        color: #a0a0a8;
+        font-size: 13px;
+    }
+
+    .info-value {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(39, 174, 96, 0.1);
+        color: #27ae60;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .info-table {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

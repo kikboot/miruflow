@@ -1,7 +1,7 @@
 @echo off
 
-set "ENCRYPTED_FILE=%~dp0mirageml-backend\.env.age"
-set "DECRYPTED_FILE=%~dp0mirageml-backend\.env"
+set "ENCRYPTED_FILE=%~dp0backend\.env.age"
+set "DECRYPTED_FILE=%~dp0backend\.env"
 set "AGE_DIR=%~dp0age"
 set "AGE_EXE=%AGE_DIR%\age\age.exe"
 
