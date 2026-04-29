@@ -19,6 +19,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view cache', false);
 
 app.use(compression());
+
+app.use((req, res, next) => {
     const cookieHeader = req.headers.cookie;
     req.cookies = {};
 
