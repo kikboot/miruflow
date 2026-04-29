@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs');
@@ -17,7 +18,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view cache', false);
 
-app.use((req, res, next) => {
+app.use(compression());
     const cookieHeader = req.headers.cookie;
     req.cookies = {};
 
@@ -46,7 +47,10 @@ app.use(session({
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend'), {
+    maxAge: '1d',
+    etag: true
+}));
 
 const getDeviceInfo = (userAgent) => {
     const isMobile = /Mobile|Android|iPhone/i.test(userAgent);
