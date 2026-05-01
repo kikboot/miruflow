@@ -539,6 +539,9 @@ async function handleMobileLogout(e) {
             console.error('Ошибка при выходе:', error);
         } finally {
             localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('authToken');
             showMobileToast('Вы успешно вышли', 'success');
             setTimeout(() => {
                 window.location.href = '../main/index.html';
@@ -1377,6 +1380,9 @@ async function handleLogout(e) {
             console.error('Ошибка при выходе:', error);
         } finally {
             localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('authToken');
             showToast('Вы успешно вышли из системы', 'success');
             setTimeout(() => {
                 window.location.href = '../main/index.html';
