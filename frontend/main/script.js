@@ -159,6 +159,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const mobileProfileBtn = document.getElementById('mobile-profile-btn');
+    const mobileProfileMenu = document.getElementById('mobile-profile-menu');
+    
+    if (mobileProfileBtn && mobileProfileMenu) {
+        mobileProfileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileProfileBtn.classList.toggle('active');
+            mobileProfileMenu.classList.toggle('active');
+            mobileProfileSection.classList.toggle('fixed');
+        });
+
+        mobileProfileMenu.querySelectorAll('.mobile-profile-item').forEach(item => {
+            item.addEventListener('click', () => {
+                mobileProfileBtn.classList.remove('active');
+                mobileProfileMenu.classList.remove('active');
+                mobileProfileSection.classList.remove('fixed');
+                closeMobileMenu();
+            });
+        });
+    }
+    
+    document.querySelectorAll('.mobile-nav .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (mobileProfileBtn) mobileProfileBtn.classList.remove('active');
+            if (mobileProfileMenu) mobileProfileMenu.classList.remove('active');
+            closeMobileMenu();
+        });
+    });
+
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener('click', () => {
+            logout();
+        });
+    }
+
     window.addEventListener('resize', handleResize);
 });
 
@@ -171,6 +207,7 @@ function openMobileMenu() {
     if (!mobileMenuContainer || !mobileMenuBtn) return;
 
     mobileMenuContainer.classList.add('active');
+    mobileMenuBtn.classList.add('active');
     mobileMenuBtn.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
 
@@ -204,6 +241,7 @@ function closeMobileMenu() {
     });
 
     mobileMenuContainer.classList.remove('active');
+    mobileMenuBtn.classList.remove('active');
     mobileMenuBtn.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
 }
@@ -1320,7 +1358,10 @@ async function checkAuthStatus() {
         token = sessionStorage.getItem('token');
     }
 
-    if (!token) return;
+    if (!token) {
+        resetAuthUI();
+        return;
+    }
 
     try {
         const response = await fetch('/api/profile', {
@@ -1335,18 +1376,44 @@ async function checkAuthStatus() {
             updateAuthUI(user);
         } else {
             localStorage.removeItem('token');
+            localStorage.removeItem('authToken');
             sessionStorage.removeItem('token');
+            sessionStorage.removeItem('authToken');
+            resetAuthUI();
         }
     } catch (error) {
         console.error('Ошибка проверки авторизации:', error);
         localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
         sessionStorage.removeItem('token');
+        sessionStorage.removeItem('authToken');
+        resetAuthUI();
+    }
+}
+
+function resetAuthUI() {
+    const mobileProfileSection = document.querySelector('.mobile-profile-section');
+    const mobileAuthButtons = document.querySelector('.mobile-auth-buttons');
+    const mobileNav = document.querySelector('.mobile-nav');
+    
+    if (mobileProfileSection) {
+        mobileProfileSection.style.display = 'none';
+    }
+    
+    if (mobileAuthButtons) {
+        mobileAuthButtons.style.display = 'flex';
+    }
+    
+    if (mobileNav) {
+        mobileNav.style.marginTop = '0';
     }
 }
 
 function updateAuthUI(user) {
     const authButtons = document.querySelector('.auth-buttons');
+    const mobileProfileSection = document.querySelector('.mobile-profile-section');
     const mobileAuthButtons = document.querySelector('.mobile-auth-buttons');
+    const mobileNav = document.querySelector('.mobile-nav');
     
     if (!authButtons) return;
 
@@ -1387,46 +1454,57 @@ function updateAuthUI(user) {
         </div>
     `;
 
-    if (mobileAuthButtons) {
-        mobileAuthButtons.innerHTML = `
-            <div class="user-menu">
-                <button class="user-avatar" aria-label="Меню пользователя" aria-haspopup="true" aria-expanded="false">
+    if (mobileProfileSection) {
+        mobileProfileSection.style.display = 'block';
+        mobileProfileSection.innerHTML = `
+            <button class="mobile-profile-btn" id="mobile-profile-btn">
+                <div class="mobile-profile-avatar" style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white;">
                     ${userInitials}
-                    <i class="fas fa-chevron-down dropdown-arrow"></i>
-                </button>
-                <div class="dropdown-content" role="menu">
-                    <div class="dropdown-header">
-                        <div class="dropdown-avatar">${userInitials}</div>
-                        <div class="dropdown-user-info">
-                            <div class="dropdown-user-name">${user.name}</div>
-                            <div class="dropdown-user-email">${user.email}</div>
-                        </div>
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <a href="/profile" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-user"></i> Профиль
-                    </a>
-                    <a href="/projects" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-project-diagram"></i> Мои проекты
-                    </a>
-                    <a href="/settings" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-cog"></i> Настройки
-                    </a>
-                    <a href="../support/index.html" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-headset"></i> Тех-поддержка
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <button id="mobile-logout-btn" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-sign-out-alt"></i> Выйти
-                    </button>
                 </div>
+                <span class="mobile-profile-text">${user.name}</span>
+                <i class="fas fa-chevron-down mobile-profile-arrow"></i>
+            </button>
+            <div class="mobile-profile-menu" id="mobile-profile-menu">
+                <a href="/profile" class="mobile-profile-item">
+                    <i class="fas fa-user-circle"></i> Мой профиль
+                </a>
+                <a href="/projects" class="mobile-profile-item">
+                    <i class="fas fa-project-diagram"></i> Мои проекты
+                </a>
+                <a href="/settings" class="mobile-profile-item">
+                    <i class="fas fa-cog"></i> Настройки
+                </a>
+                <button class="mobile-profile-item" id="mobile-logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
             </div>
         `;
-
+        
+        const mobileProfileBtn = document.getElementById('mobile-profile-btn');
+        const mobileProfileMenu = document.getElementById('mobile-profile-menu');
         const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-        if (mobileLogoutBtn) {
-            mobileLogoutBtn.addEventListener('click', logout);
+        
+        if (mobileProfileBtn && mobileProfileMenu) {
+            mobileProfileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileProfileBtn.classList.toggle('active');
+                mobileProfileMenu.classList.toggle('active');
+            });
         }
+        
+        if (mobileLogoutBtn) {
+            mobileLogoutBtn.addEventListener('click', () => {
+                logout();
+            });
+        }
+    }
+    
+    if (mobileAuthButtons) {
+        mobileAuthButtons.style.display = 'none';
+    }
+    
+    if (mobileNav) {
+        mobileNav.style.marginTop = '20px';
     }
 
     initUserMenu();
