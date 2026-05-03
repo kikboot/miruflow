@@ -422,7 +422,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.post('/api/recovery', async (req, res) => {
