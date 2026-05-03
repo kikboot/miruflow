@@ -299,7 +299,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 12px 24px;
     border-radius: var(--border-radius);
     font-weight: 600;
     font-size: 14px;
