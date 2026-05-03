@@ -440,6 +440,13 @@ app.post('/api/recovery', async (req, res) => {
             return res.status(400).json({ error: 'Email обязателен' });
         }
 
+        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            console.error('[Recovery] SMTP не настроен! Задайте SMTP_USER и SMTP_PASS');
+            if (process.env.NODE_ENV !== 'production') {
+                return res.status(500).json({ error: 'SMTP не настроен' });
+            }
+        }
+
         const user = await db.getUserByEmail(email);
         if (!user) {
             return res.json({ success: true, message: 'Если email существует, ссылка для сброса будет отправлена' });
@@ -470,10 +477,14 @@ app.post('/api/recovery', async (req, res) => {
         };
 
         await transporter.sendMail(mailOptions);
+        console.log(`[Recovery] Письмо отправлено на ${email}`);
 
         res.json({ success: true, message: 'Если email существует, ссылка для сброса будет отправлена' });
     } catch (error) {
         console.error('[Recovery] Ошибка:', error);
+        if (process.env.NODE_ENV !== 'production') {
+            return res.status(500).json({ error: error.message });
+        }
         res.json({ success: true, message: 'Если email существует, ссылка для сброса будет отправлена' });
     }
 });
