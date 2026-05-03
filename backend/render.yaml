@@ -34,6 +34,16 @@ services:
         fromDatabase:
           name: mirageml-db
           property: password
+      - key: FRONTEND_URL
+        value: https://miruflow.onrender.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
 
 databases:
   - name: mirageml-db
