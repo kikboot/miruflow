@@ -453,7 +453,7 @@ app.post('/api/recovery', async (req, res) => {
         const resetUrl = `${process.env.FRONTEND_URL || 'https://miruflow.onrender.com'}/reset-password?token=${resetToken}`;
 
         const { data, error } = await resend.emails.send({
-            from: 'MiruFlow <onboarding@resend.dev>',
+            from: 'onboarding@resend.dev',
             to: [email],
             subject: 'Восстановление пароля MiruFlow',
             html: `
