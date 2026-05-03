@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const session = require('express-session');
 const { USER_ROLES, ROLE_PERMISSIONS, hasPermission, isOwner } = require('./models/user-roles');
 const db = require('./database/db');
@@ -422,18 +422,8 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: process.env.SMTP_PORT == 465,
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000
-});
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.post('/api/recovery', async (req, res) => {
     try {
@@ -443,10 +433,10 @@ app.post('/api/recovery', async (req, res) => {
             return res.status(400).json({ error: 'Email обязателен' });
         }
 
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            console.error('[Recovery] SMTP не настроен! Задайте SMTP_USER и SMTP_PASS');
+        if (!process.env.RESEND_API_KEY) {
+            console.error('[Recovery] RESEND_API_KEY не задан!');
             if (process.env.NODE_ENV !== 'production') {
-                return res.status(500).json({ error: 'SMTP не настроен' });
+                return res.status(500).json({ error: 'RESEND_API_KEY не задан' });
             }
         }
 
@@ -461,11 +451,11 @@ app.post('/api/recovery', async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+        const resetUrl = `${process.env.FRONTEND_URL || 'https://miruflow.onrender.com'}/reset-password?token=${resetToken}`;
 
-        const mailOptions = {
-            from: `"MiruFlow" <${process.env.SMTP_USER}>`,
-            to: email,
+        const { data, error } = await resend.emails.send({
+            from: 'MiruFlow <onboarding@resend.dev>',
+            to: [email],
             subject: 'Восстановление пароля MiruFlow',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -477,11 +467,14 @@ app.post('/api/recovery', async (req, res) => {
                     <p style="color: #666; font-size: 12px;">Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
                 </div>
             `
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
-        console.log(`[Recovery] Письмо отправлено на ${email}`);
+        if (error) {
+            console.error('[Recovery] Ошибка Resend:', error);
+            return res.status(500).json({ error: 'Ошибка отправки письма' });
+        }
 
+        console.log(`[Recovery] Письмо отправлено на ${email}`, data);
         res.json({ success: true, message: 'Если email существует, ссылка для сброса будет отправлена' });
     } catch (error) {
         console.error('[Recovery] Ошибка:', error);
