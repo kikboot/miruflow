@@ -109,6 +109,16 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', closeMobileMenu);
     });
 
+    const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
+    if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+    }
+
+    const mobileProfileSection = document.querySelector('.mobile-profile-section button');
+    if (mobileProfileSection) {
+        mobileProfileSection.addEventListener('click', closeMobileMenu);
+    }
+
     if (switchToRegister) {
         switchToRegister.addEventListener('click', () => {
             switchModals(loginModal, registerModal);
