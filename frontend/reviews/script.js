@@ -450,15 +450,6 @@ function updateAuthUI(user) {
                     <a href="/profile" class="dropdown-item" role="menuitem">
                         <i class="fas fa-user"></i> Профиль
                     </a>
-                    <a href="/projects" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-project-diagram"></i> Мои проекты
-                    </a>
-                    <a href="/settings" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-cog"></i> Настройки
-                    </a>
-                    <a href="../support/index.html" class="dropdown-item" role="menuitem">
-                        <i class="fas fa-headset"></i> Тех-поддержка
-                    </a>
                     <div class="dropdown-divider"></div>
                     <button id="logout-btn" class="dropdown-item" role="menuitem">
                         <i class="fas fa-sign-out-alt"></i> Выйти
@@ -479,12 +470,6 @@ function updateAuthUI(user) {
                 <div class="mobile-profile-menu" id="mobile-profile-menu">
                     <a href="/profile" class="mobile-profile-item">
                         <i class="fas fa-user-circle"></i> Мой профиль
-                    </a>
-                    <a href="/projects" class="mobile-profile-item">
-                        <i class="fas fa-project-diagram"></i> Мои проекты
-                    </a>
-                    <a href="/settings" class="mobile-profile-item">
-                        <i class="fas fa-cog"></i> Настройки
                     </a>
                     <button class="mobile-profile-item" id="mobile-logout-btn">
                         <i class="fas fa-sign-out-alt"></i> Выйти

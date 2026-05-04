@@ -1119,7 +1119,7 @@ body {
 
 .header-nav {
     display: flex;
-    gap: 8px;
+    gap: 32px;
     align-items: center;
 }
 
@@ -1127,13 +1127,14 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 8px 14px;
     text-decoration: none;
-    color: var(--text-secondary);
-    font-size: 14px;
+    color: var(--gray-light);
     font-weight: 500;
     border-radius: var(--border-radius);
     transition: var(--transition);
+    position: relative;
+    overflow: hidden;
 }
 
 .header-nav-link:hover {
@@ -1142,7 +1143,7 @@ body {
 }
 
 .header-nav-link i {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 @media (max-width: 1200px) {
