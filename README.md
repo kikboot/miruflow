@@ -1,11 +1,11 @@
 # 🚀 MiruFlow — Простой визуальный редактор 
 
 <p align="center">
-  <img src="frontend/assets/logo.png" alt="MiruFlow Логотип" width="120px">
+  <img src="https://miruflow.onrender.com/logo/logo3.svg" alt="MiruFlow Логотип" width="120px">
   <br>
   <b>Собирайте красивые сайты в удобном визуальном редакторе и забирайте готовый результат абсолютно бесплатно. Без сложного кода и скрытых подписок.</b>
   <br>
-  <a href="https://onrender.com"><strong>Попробовать MiruFlow бесплатно →</strong></a>
+  <a href="https://miruflow.onrender.com"><strong>Попробовать MiruFlow бесплатно →</strong></a>
 </p>
 
 ---
