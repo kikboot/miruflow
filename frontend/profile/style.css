@@ -755,6 +755,22 @@ body {
     width: 16px;
 }
 
+.mobile-session-device .device-icons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.mobile-session-device .device-icons i {
+    font-size: 1rem;
+    width: auto;
+}
+
+.mobile-session-device .device-text {
+    font-weight: 500;
+    color: var(--light);
+}
+
 .mobile-session-location {
     color: var(--gray-light);
     font-size: 12px;
@@ -1644,6 +1660,22 @@ body {
 .session-device i {
     color: var(--primary);
     width: 16px;
+}
+
+.session-device .device-icons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.session-device .device-icons i {
+    font-size: 1.1rem;
+    width: auto;
+}
+
+.session-device .device-text {
+    font-weight: 500;
+    color: var(--light);
 }
 
 .session-location {

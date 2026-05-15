@@ -1523,35 +1523,26 @@ async function loadActiveSessions() {
         });
 
         sessionsContainer.innerHTML = sortedSessions.map(session => {
-            const sessionDate = new Date(session.createdAt);
-            const timeDiff = Math.floor((Date.now() - sessionDate.getTime()) / 1000);
-            let timeText = 'Только что';
+            const createdAt = session.createdAt || session.created_at;
+            const sessionDate = new Date(createdAt);
             
-            if (timeDiff > 60) {
-                const minutes = Math.floor(timeDiff / 60);
-                if (minutes < 60) {
-                    timeText = `${minutes} мин. назад`;
-                } else {
-                    const hours = Math.floor(minutes / 60);
-                    if (hours < 24) {
-                        timeText = `${hours} ч. назад`;
-                    } else {
-                        const days = Math.floor(hours / 24);
-                        timeText = `${days} дн. назад`;
-                    }
-                }
-            }
+            const day = sessionDate.getDate();
+            const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+            const month = monthNames[sessionDate.getMonth()];
+            const hours = sessionDate.getHours().toString().padStart(2, '0');
+            const minutes = sessionDate.getMinutes().toString().padStart(2, '0');
+            const timeText = isNaN(day) ? 'Неизвестно' : `${day} ${month}, ${hours}:${minutes}`;
 
             const isCurrent = session.isCurrent;
             const statusClass = isCurrent ? 'current' : '';
-            const locationText = isCurrent ? `${session.location} (текущая)` : session.location;
+            const locationText = isCurrent ? 'Это устройство' : session.location;
             
             return `
                 <div class="session-item-modern ${statusClass}">
                     <div class="session-info">
                         <div class="session-device">
-                            <i class="fas ${getDeviceIcon(session.device)}"></i>
-                            ${session.device}
+                            <i class="${getBrowserIcon(session.device)}"></i>
+                            <span class="device-text">${session.device}</span>
                         </div>
                         <div class="session-location">${locationText}</div>
                         <div class="session-time">${timeText}</div>
@@ -1616,24 +1607,15 @@ async function loadMobileActiveSessions() {
         });
 
         sessionsContainer.innerHTML = sortedSessions.map(session => {
-            const sessionDate = new Date(session.createdAt);
-            const timeDiff = Math.floor((Date.now() - sessionDate.getTime()) / 1000);
-            let timeText = 'Только что';
+            const createdAt = session.createdAt || session.created_at;
+            const sessionDate = new Date(createdAt);
             
-            if (timeDiff > 60) {
-                const minutes = Math.floor(timeDiff / 60);
-                if (minutes < 60) {
-                    timeText = `${minutes} мин. назад`;
-                } else {
-                    const hours = Math.floor(minutes / 60);
-                    if (hours < 24) {
-                        timeText = `${hours} ч. назад`;
-                    } else {
-                        const days = Math.floor(hours / 24);
-                        timeText = `${days} дн. назад`;
-                    }
-                }
-            }
+            const day = sessionDate.getDate();
+            const monthNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+            const month = monthNames[sessionDate.getMonth()];
+            const hours = sessionDate.getHours().toString().padStart(2, '0');
+            const minutes = sessionDate.getMinutes().toString().padStart(2, '0');
+            const timeText = isNaN(day) ? 'Неизвестно' : `${day} ${month}, ${hours}:${minutes}`;
 
             const isCurrent = session.isCurrent;
             const statusClass = isCurrent ? 'current' : '';
@@ -1643,8 +1625,8 @@ async function loadMobileActiveSessions() {
                 <div class="mobile-session-item ${statusClass}">
                     <div class="mobile-session-info">
                         <div class="mobile-session-device">
-                            <i class="fas ${getDeviceIcon(session.device)}"></i>
-                            ${session.device}
+                            <i class="${getBrowserIcon(session.device)}"></i>
+                            <span class="device-text">${session.device}</span>
                         </div>
                         <div class="mobile-session-location">${locationText}</div>
                         <div class="mobile-session-time">${timeText}</div>
@@ -1672,30 +1654,44 @@ async function loadMobileActiveSessions() {
     }
 }
 
-function getDeviceIcon(deviceInfo) {
+function getBrowserIcon(deviceInfo) {
+    const device = deviceInfo.toLowerCase();
+
+    if (device.includes('chrome')) {
+        return 'fab fa-chrome';
+    } else if (device.includes('firefox')) {
+        return 'fab fa-firefox-browser';
+    } else if (device.includes('safari')) {
+        return 'fab fa-safari';
+    } else if (device.includes('edge')) {
+        return 'fab fa-edge';
+    } else if (device.includes('opera')) {
+        return 'fab fa-opera';
+    } else {
+        return 'fas fa-globe';
+    }
+}
+
+function getOSIcon(deviceInfo) {
     const device = deviceInfo.toLowerCase();
 
     if (device.includes('mobile') || device.includes('iphone') || device.includes('android')) {
-        return 'fa-mobile-alt';
+        return 'fas fa-mobile-alt';
     } else if (device.includes('tablet')) {
-        return 'fa-tablet-alt';
-    } else if (device.includes('macos') || device.includes('mac')) {
-        return 'fa-apple';
+        return 'fas fa-tablet-alt';
+    } else if (device.includes('mac') || device.includes('macos')) {
+        return 'fab fa-apple';
     } else if (device.includes('windows')) {
-        return 'fa-windows';
+        return 'fab fa-windows';
     } else if (device.includes('linux')) {
-        return 'fa-linux';
-    } else if (device.includes('chrome')) {
-        return 'fa-chrome';
-    } else if (device.includes('firefox')) {
-        return 'fa-firefox';
-    } else if (device.includes('safari')) {
-        return 'fa-safari';
-    } else if (device.includes('edge')) {
-        return 'fa-edge';
+        return 'fab fa-linux';
     } else {
-        return 'fa-desktop';
+        return 'fas fa-desktop';
     }
+}
+
+function getDeviceIcon(deviceInfo) {
+    return getOSIcon(deviceInfo);
 }
 
 async function terminateSessionByToken(sessionToken, element) {

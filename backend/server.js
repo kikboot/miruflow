@@ -87,7 +87,7 @@ const getDeviceInfo = (userAgent) => {
 };
 
 const getLocationByIP = (ip) => {
-    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return 'Локальный хост';
+    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return 'Россия';
     return 'Москва, Россия';
 };
 
